@@ -1,7 +1,10 @@
 dataset/data_10-20/mne_data/*
-dataset/data_10-20/eeg_5_95_std.pth
+dataset/eeg_5_95_std.pth
+dataset/block_splits_by_image_single.pth
 src/DreamDiffusion/pretrains/models/v1-5-pruned.ckpt
 src/DreamDiffusion/pretrains/models/encoder.pt
+src/DreamDiffusion/pretrains/models/*
+src/DreamDiffusion/results
 # Created by .ignore support plugin (hsz.mobi)
 ### Python template
 # Byte-compiled / optimized / DLL files

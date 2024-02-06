@@ -316,7 +316,7 @@ class EEGDataset(Dataset):
             self.data = loaded['dataset']        
         self.labels = loaded["labels"]
         self.images = loaded["images"]
-        self.imagenet = '/apdcephfs/share_1290939/0_public_datasets/imageNet_2012/train/'
+        self.imagenet = '/mnt/media/luigi/dataset/imageNet_images/'
         self.image_transform = image_transform
         self.num_voxels = 440
         self.data_len = 512

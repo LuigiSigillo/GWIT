@@ -26,3 +26,10 @@ if __name__ == "__main__":
     print("Latents shape: ", latents.shape)
 
 
+encoder_file = "encoder.pt"
+encoder = ConvEncoderBENDR(in_features=20, encoder_h=512)
+encoder.load(encoder_file, strict=True)
+encoder.freeze_features()
+encoder = encoder.to('cuda')
+def get_latents():
+    pass

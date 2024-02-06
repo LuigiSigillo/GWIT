@@ -140,8 +140,11 @@ def main(config):
     ])
     if config.dataset == 'EEG':
 
-        eeg_latents_dataset_train, eeg_latents_dataset_test = create_EEG_dataset(eeg_signals_path = config.eeg_signals_path, splits_path = config.splits_path, 
-                image_transform=[img_transform_train, img_transform_test], subject = config.subject)
+        eeg_latents_dataset_train, eeg_latents_dataset_test = create_EEG_dataset(eeg_signals_path = config.eeg_signals_path, 
+                                                                                 splits_path = config.splits_path, 
+                                                                                 image_transform=[img_transform_train, img_transform_test], 
+                                                                                 subject = config.subject
+                                                                                 )
         # eeg_latents_dataset_train, eeg_latents_dataset_test = create_EEG_dataset_viz( image_transform=[img_transform_train, img_transform_test])
         num_voxels = eeg_latents_dataset_train.data_len
 

@@ -51,7 +51,7 @@ class random_crop:
 def get_args_parser():
     parser = argparse.ArgumentParser('Double Conditioning LDM Finetuning', add_help=False)
     # project parameters
-    parser.add_argument('--root', type=str, default='../dreamdiffusion/')
+    parser.add_argument('--root', type=str, default='/home/luigi/Documents/DrEEam/src/DreamDiffusion/')
     parser.add_argument('--dataset', type=str, default='GOD')
     parser.add_argument('--model_path', type=str)
 
@@ -63,13 +63,13 @@ if __name__ == '__main__':
     args = args.parse_args()
     root = args.root
     target = args.dataset
-
+    # args.model_path = "/home/luigi/Documents/DrEEam/src/DreamDiffusion/pretrains/models/checkpoint_DreamDiff.pth"
     sd = torch.load(args.model_path, map_location='cpu')
     config = sd['config']
     # update paths
     config.root_path = root
-    config.pretrain_mbm_path = '../dreamdiffusion/results/eeg_pretrain/19-02-2023-08-48-17/checkpoints/checkpoint.pth'
-    config.pretrain_gm_path = '../dreamdiffusion/pretrains/'
+    config.pretrain_mbm_path = '/home/luigi/Documents/DrEEam/src/DreamDiffusion/pretrains/models/encoder_federica_checkpoint.pth'
+    config.pretrain_gm_path = '/home/luigi/Documents/DrEEam/src/DreamDiffusion/pretrains/'
     print(config.__dict__)
 
     output_path = os.path.join(config.root_path, 'results', 'eval',  
@@ -91,7 +91,8 @@ if __name__ == '__main__':
     ])
 
     
-    splits_path = "../dreamdiffusion/datasets/block_splits_by_image_single.pth"
+    splits_path = "/home/luigi/Documents/DrEEam/dataset/block_splits_by_image_single.pth"
+    config.eeg_signals_path = "/home/luigi/Documents/DrEEam/dataset/eeg_5_95_std.pth"
     dataset_train, dataset_test = create_EEG_dataset(eeg_signals_path = config.eeg_signals_path, splits_path = splits_path, 
                 image_transform=[img_transform_train, img_transform_test], subject = 4)
     num_voxels = dataset_test.dataset.data_len
