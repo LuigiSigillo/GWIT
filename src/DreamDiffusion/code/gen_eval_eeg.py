@@ -63,12 +63,12 @@ if __name__ == '__main__':
     args = args.parse_args()
     root = args.root
     target = args.dataset
-    # args.model_path = "/home/luigi/Documents/DrEEam/src/DreamDiffusion/pretrains/models/checkpoint_DreamDiff.pth"
+    args.model_path = "/home/luigi/Documents/DrEEam/src/DreamDiffusion/pretrains/models/checkpoint_DreamDiff.pth"
     sd = torch.load(args.model_path, map_location='cpu')
     config = sd['config']
     # update paths
     config.root_path = root
-    config.pretrain_mbm_path = '/home/luigi/Documents/DrEEam/src/DreamDiffusion/pretrains/models/encoder_federica_checkpoint.pth'
+    config.pretrain_mbm_path = '/home/luigi/Documents/DrEEam/src/DreamDiffusion/pretrains/models/encoder_github_checkpoint.pth'
     config.pretrain_gm_path = '/home/luigi/Documents/DrEEam/src/DreamDiffusion/pretrains/'
     print(config.__dict__)
 
@@ -94,27 +94,30 @@ if __name__ == '__main__':
     splits_path = "/home/luigi/Documents/DrEEam/dataset/block_splits_by_image_single.pth"
     config.eeg_signals_path = "/home/luigi/Documents/DrEEam/dataset/eeg_5_95_std.pth"
     dataset_train, dataset_test = create_EEG_dataset(eeg_signals_path = config.eeg_signals_path, splits_path = splits_path, 
-                image_transform=[img_transform_train, img_transform_test], subject = 4)
+                image_transform=[img_transform_train, img_transform_test], subject = 2)
     num_voxels = dataset_test.dataset.data_len
 
     # num_voxels = dataset_test.num_voxels
     print(len(dataset_test))
     # prepare pretrained mae 
-    pretrain_mbm_metafile = torch.load(config.pretrain_mbm_path, map_location='cpu')
+    pretrain_mbm_metafile = None #torch.load(config.pretrain_mbm_path, map_location='cpu')
     # create generateive model
     generative_model = eLDM(pretrain_mbm_metafile, num_voxels,
                 device=device, pretrain_root=config.pretrain_gm_path, logger=config.logger,
                 ddim_steps=config.ddim_steps, global_pool=config.global_pool, use_time_cond=config.use_time_cond)
     # m, u = model.load_state_dict(pl_sd, strict=False)
+    
+    #commentato
     generative_model.model.load_state_dict(sd['model_state_dict'], strict=False)
+    
     print('load ldm successfully')
     state = sd['state']
     os.makedirs(output_path, exist_ok=True)
-    grid, _ = generative_model.generate(dataset_train, config.num_samples, 
-                config.ddim_steps, config.HW, 10) # generate 10 instances
-    grid_imgs = Image.fromarray(grid.astype(np.uint8))
+    # grid, _ = generative_model.generate(dataset_train, config.num_samples, 
+    #             config.ddim_steps, config.HW, 10) # generate 10 instances
+    # grid_imgs = Image.fromarray(grid.astype(np.uint8))
     
-    grid_imgs.save(os.path.join(output_path, f'./samples_train.png'))
+    # grid_imgs.save(os.path.join(output_path, f'./samples_train.png'))
 
     grid, samples = generative_model.generate(dataset_test, config.num_samples, 
                 config.ddim_steps, config.HW, limit=None, state=state, output_path = output_path) # generate 10 instances

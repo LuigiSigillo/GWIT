@@ -32,7 +32,7 @@ class cond_stage_model(nn.Module):
         # prepare pretrained fmri mae 
         if metafile is not None:
             model = create_model_from_config(metafile['config'], num_voxels, global_pool)
-        
+            #commentato
             model.load_checkpoint(metafile['model'])
         else:
             model = eeg_encoder(time_len=num_voxels, global_pool=global_pool)
