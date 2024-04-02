@@ -5,6 +5,9 @@ src/DreamDiffusion/pretrains/models/v1-5-pruned.ckpt
 src/DreamDiffusion/pretrains/models/encoder.pt
 src/DreamDiffusion/pretrains/models/*
 src/DreamDiffusion/results
+wandb/
+checkpoints/
+bendr.yaml
 # Created by .ignore support plugin (hsz.mobi)
 ### Python template
 # Byte-compiled / optimized / DLL files

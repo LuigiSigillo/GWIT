@@ -31,10 +31,12 @@ class cond_stage_model(nn.Module):
         super().__init__()
         # prepare pretrained fmri mae 
         if metafile is not None:
+            print("Loading encoder from checkpoint")
             model = create_model_from_config(metafile['config'], num_voxels, global_pool)
             #commentato
             model.load_checkpoint(metafile['model'])
         else:
+            print("Initializing encoder from scratch")
             model = eeg_encoder(time_len=num_voxels, global_pool=global_pool)
         self.mae = model
         if clip_tune:
@@ -96,7 +98,8 @@ class eLDM:
                  pretrain_root='../pretrains/',
                  logger=None, ddim_steps=250, global_pool=True, use_time_cond=False, clip_tune = True, cls_tune = False):
         # self.ckp_path = os.path.join(pretrain_root, 'model.ckpt')
-        self.ckp_path = os.path.join(pretrain_root, 'models/v1-5-pruned.ckpt')
+        # self.ckp_path = os.path.join(pretrain_root, 'models/v1-5-pruned.ckpt')
+        self.ckp_path = os.path.join('/home/luigi/Documents/DrEEam/src/DreamDiffusion/pretrains/models/v1-5-pruned.ckpt')
         self.config_path = os.path.join(pretrain_root, 'models/config15.yaml') 
         config = OmegaConf.load(self.config_path)
         config.model.params.unet_config.params.use_time_cond = use_time_cond
@@ -106,6 +109,7 @@ class eLDM:
 
         model = instantiate_from_config(config.model)
         pl_sd = torch.load(self.ckp_path, map_location="cpu")['state_dict']
+        print("state sd: ", torch.load(self.ckp_path, map_location="cpu")['state'])
        
         m, u = model.load_state_dict(pl_sd, strict=False)
         model.cond_stage_trainable = True
@@ -193,8 +197,14 @@ class eLDM:
                 if limit is not None:
                     if count >= limit:
                         break
-                print(item)
+                # print(item)
                 latent = item['eeg']
+
+                # Prova passando tensore random invece di eeg
+                # print("eeg: ", latent)
+                # latent = torch.randn(latent.shape).to(self.device)
+                # print("fake eeg: ", latent)
+
                 gt_image = rearrange(item['image'], 'h w c -> 1 c h w') # h w c
                 print(f"rendering {num_samples} examples in {ddim_steps} steps.")
                 # assert latent.shape[-1] == self.fmri_latent_dim, 'dim error'
@@ -205,7 +215,8 @@ class eLDM:
                                                 conditioning=c,
                                                 batch_size=num_samples,
                                                 shape=shape,
-                                                verbose=False)
+                                                verbose=False,
+                                                unconditional_guidance_scale=10)
 
                 x_samples_ddim = model.decode_first_stage(samples_ddim)
                 x_samples_ddim = torch.clamp((x_samples_ddim+1.0)/2.0, min=0.0, max=1.0)

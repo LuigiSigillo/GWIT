@@ -51,7 +51,7 @@ class random_crop:
 def get_args_parser():
     parser = argparse.ArgumentParser('Double Conditioning LDM Finetuning', add_help=False)
     # project parameters
-    parser.add_argument('--root', type=str, default='/home/luigi/Documents/DrEEam/src/DreamDiffusion/')
+    parser.add_argument('--root', type=str, default='/home/lopez/Documents/DrEEam/src/DreamDiffusion/')
     parser.add_argument('--dataset', type=str, default='GOD')
     parser.add_argument('--model_path', type=str)
 
@@ -100,18 +100,23 @@ if __name__ == '__main__':
     # num_voxels = dataset_test.num_voxels
     print(len(dataset_test))
     # prepare pretrained mae 
-    pretrain_mbm_metafile = None #torch.load(config.pretrain_mbm_path, map_location='cpu')
+    pretrain_mbm_metafile = torch.load(config.pretrain_mbm_path, map_location='cpu')
+    # pretrain_mbm_metafile = None
+    if pretrain_mbm_metafile is None:
+        print('pretrain_mbm_metafile: ', pretrain_mbm_metafile)
+    else:
+        print('pretrain_mbm_metafile: NOT NONE')
     # create generateive model
     generative_model = eLDM(pretrain_mbm_metafile, num_voxels,
                 device=device, pretrain_root=config.pretrain_gm_path, logger=config.logger,
                 ddim_steps=config.ddim_steps, global_pool=config.global_pool, use_time_cond=config.use_time_cond)
+
     # m, u = model.load_state_dict(pl_sd, strict=False)
-    
-    #commentato
-    generative_model.model.load_state_dict(sd['model_state_dict'], strict=False)
-    
-    print('load ldm successfully')
+    # generative_model.model.load_state_dict(sd['model_state_dict'], strict=False)
+    # print('load ldm successfully')
     state = sd['state']
+    # print("state: ", state)
+    # exit()
     os.makedirs(output_path, exist_ok=True)
     # grid, _ = generative_model.generate(dataset_train, config.num_samples, 
     #             config.ddim_steps, config.HW, 10) # generate 10 instances
@@ -120,8 +125,7 @@ if __name__ == '__main__':
     # grid_imgs.save(os.path.join(output_path, f'./samples_train.png'))
 
     grid, samples = generative_model.generate(dataset_test, config.num_samples, 
-                config.ddim_steps, config.HW, limit=None, state=state, output_path = output_path) # generate 10 instances
+                config.ddim_steps, config.HW, limit=2, state=None, output_path = output_path) # generate 10 instances
     grid_imgs = Image.fromarray(grid.astype(np.uint8))
-
 
     grid_imgs.save(os.path.join(output_path, f'./samples_test.png'))
