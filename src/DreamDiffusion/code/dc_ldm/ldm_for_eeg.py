@@ -26,26 +26,99 @@ def clip_loss(similarity: torch.Tensor) -> torch.Tensor:
     image_loss = contrastive_loss(similarity, dim=1)
     return (caption_loss + image_loss) / 2.0
 
+# class cond_stage_model(nn.Module):
+#     def __init__(self, metafile, num_voxels=440, cond_dim=1280, global_pool=True, clip_tune = True, cls_tune = False):
+#         super().__init__()
+#         # prepare pretrained fmri mae 
+#         if metafile is not None:
+#             print("Loading encoder from checkpoint")
+#             model = create_model_from_config(metafile['config'], num_voxels, global_pool)
+#             #commentato
+#             model.load_checkpoint(metafile['model'])
+#         else:
+#             print("Initializing encoder from scratch")
+#             model = eeg_encoder(time_len=num_voxels, global_pool=global_pool)
+#         self.mae = model
+#         if clip_tune:
+#             self.mapping = mapping()
+#         if cls_tune:
+#             self.cls_net = classify_network()
+
+#         self.fmri_seq_len = model.num_patches
+#         self.fmri_latent_dim = model.embed_dim
+#         if global_pool == False:
+#             self.channel_mapper = nn.Sequential(
+#                 nn.Conv1d(self.fmri_seq_len, self.fmri_seq_len // 2, 1, bias=True),
+#                 nn.Conv1d(self.fmri_seq_len // 2, 77, 1, bias=True)
+#             )
+#         self.dim_mapper = nn.Linear(self.fmri_latent_dim, cond_dim, bias=True)
+#         self.global_pool = global_pool
+
+#         # self.image_embedder = FrozenImageEmbedder()
+
+#     # def forward(self, x):
+#     #     # n, c, w = x.shape
+#     #     latent_crossattn = self.mae(x)
+#     #     if self.global_pool == False:
+#     #         latent_crossattn = self.channel_mapper(latent_crossattn)
+#     #     latent_crossattn = self.dim_mapper(latent_crossattn)
+#     #     out = latent_crossattn
+#     #     return out
+
+#     def forward(self, x):
+#         # n, c, w = x.shape
+#         latent_crossattn = self.mae(x)
+#         latent_return = latent_crossattn
+#         if self.global_pool == False:
+#             latent_crossattn = self.channel_mapper(latent_crossattn)
+#         latent_crossattn = self.dim_mapper(latent_crossattn)
+#         out = latent_crossattn
+#         return out, latent_return
+
+#     # def recon(self, x):
+#     #     recon = self.decoder(x)
+#     #     return recon
+
+#     def get_cls(self, x):
+#         return self.cls_net(x)
+
+#     def get_clip_loss(self, x, image_embeds):
+#         # image_embeds = self.image_embedder(image_inputs)
+#         target_emb = self.mapping(x)
+#         # similarity_matrix = nn.functional.cosine_similarity(target_emb.unsqueeze(1), image_embeds.unsqueeze(0), dim=2)
+#         # loss = clip_loss(similarity_matrix)
+#         loss = 1 - torch.cosine_similarity(target_emb, image_embeds, dim=-1).mean()
+#         return loss
+    
+import sys
+sys.path.append('/home/luigi/Documents/DrEEam/src/BENDR')
+from dn3_ext import ConvEncoderBENDR
+
 class cond_stage_model(nn.Module):
     def __init__(self, metafile, num_voxels=440, cond_dim=1280, global_pool=True, clip_tune = True, cls_tune = False):
         super().__init__()
         # prepare pretrained fmri mae 
         if metafile is not None:
             print("Loading encoder from checkpoint")
-            model = create_model_from_config(metafile['config'], num_voxels, global_pool)
-            #commentato
-            model.load_checkpoint(metafile['model'])
+            model  = ConvEncoderBENDR(in_features=20, encoder_h=512)
+            model.load(metafile, strict=True)
+            model.freeze_features()
+            model = model.to('cuda')
         else:
             print("Initializing encoder from scratch")
-            model = eeg_encoder(time_len=num_voxels, global_pool=global_pool)
+            model = ConvEncoderBENDR(in_features=20, encoder_h=512)
         self.mae = model
         if clip_tune:
             self.mapping = mapping()
         if cls_tune:
             self.cls_net = classify_network()
 
-        self.fmri_seq_len = model.num_patches
-        self.fmri_latent_dim = model.embed_dim
+        # self.fmri_seq_len = model.num_patches
+        # self.fmri_latent_dim = model.embed_dim
+        self.fmri_latent_dim = 5 #model.encoder_h
+        self.fmri_seq_len = 512
+
+
         if global_pool == False:
             self.channel_mapper = nn.Sequential(
                 nn.Conv1d(self.fmri_seq_len, self.fmri_seq_len // 2, 1, bias=True),
@@ -99,8 +172,8 @@ class eLDM:
                  logger=None, ddim_steps=250, global_pool=True, use_time_cond=False, clip_tune = True, cls_tune = False):
         # self.ckp_path = os.path.join(pretrain_root, 'model.ckpt')
         # self.ckp_path = os.path.join(pretrain_root, 'models/v1-5-pruned.ckpt')
-        self.ckp_path = os.path.join('/home/luigi/Documents/DrEEam/src/DreamDiffusion/pretrains/models/v1-5-pruned.ckpt')
-        self.config_path = os.path.join(pretrain_root, 'models/config15.yaml') 
+        self.ckp_path = '/home/luigi/Documents/DrEEam/src/DreamDiffusion/pretrains/models/v1-5-pruned.ckpt'
+        self.config_path = '/home/luigi/Documents/DrEEam/src/DreamDiffusion/pretrains/models/config15.yaml' #os.path.join(pretrain_root, 'models/config15.yaml') 
         config = OmegaConf.load(self.config_path)
         config.model.params.unet_config.params.use_time_cond = use_time_cond
         config.model.params.unet_config.params.global_pool = global_pool
@@ -109,7 +182,7 @@ class eLDM:
 
         model = instantiate_from_config(config.model)
         pl_sd = torch.load(self.ckp_path, map_location="cpu")['state_dict']
-        print("state sd: ", torch.load(self.ckp_path, map_location="cpu")['state'])
+        # print("state sd: ", torch.load(self.ckp_path, map_location="cpu")['state'])
        
         m, u = model.load_state_dict(pl_sd, strict=False)
         model.cond_stage_trainable = True
@@ -148,8 +221,11 @@ class eLDM:
       
         # # stage one: only optimize conditional encoders
         print('\n##### Stage One: only optimize conditional encoders #####')
-        dataloader = DataLoader(dataset, batch_size=bs1, shuffle=True)
-        test_loader = DataLoader(test_dataset, batch_size=bs1, shuffle=False)
+        def collate_fn(batch):
+            batch = list(filter(lambda x: x is not None, batch))
+            return torch.utils.data.dataloader.default_collate(batch)
+        dataloader = DataLoader(dataset, batch_size=bs1, shuffle=True, num_workers=12, collate_fn=collate_fn)
+        test_loader = DataLoader(test_dataset, batch_size=bs1, shuffle=False, num_workers=12, collate_fn=collate_fn)
         self.model.unfreeze_whole_model()
         self.model.freeze_first_stage()
         # self.model.freeze_whole_model()

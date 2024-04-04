@@ -142,7 +142,7 @@ def main(config):
 
         eeg_latents_dataset_train, eeg_latents_dataset_test = create_EEG_dataset(eeg_signals_path = config.eeg_signals_path, 
                                                                                  splits_path = config.splits_path, 
-                                                                                 image_transform=[img_transform_train, img_transform_test], 
+                                                                                image_transform=[img_transform_train, img_transform_test], 
                                                                                  subject = config.subject
                                                                                  )
         # eeg_latents_dataset_train, eeg_latents_dataset_test = create_EEG_dataset_viz( image_transform=[img_transform_train, img_transform_test])
@@ -154,8 +154,10 @@ def main(config):
 
     # prepare pretrained mbm 
 
-    pretrain_mbm_metafile = torch.load(config.pretrain_mbm_path, map_location='cpu')
-
+    if config.pretrain_mbm_path is not None:
+        pretrain_mbm_metafile = torch.load(config.pretrain_mbm_path, map_location='cpu')
+    else:
+        pretrain_mbm_metafile = None
     # create generateive model
     generative_model = eLDM(pretrain_mbm_metafile, num_voxels,
                 device=device, pretrain_root=config.pretrain_gm_path, logger=config.logger, 
@@ -181,7 +183,7 @@ def get_args_parser():
     parser = argparse.ArgumentParser('Double Conditioning LDM Finetuning', add_help=False)
     # project parameters
     parser.add_argument('--seed', type=int)
-    parser.add_argument('--root_path', type=str, default = '../dreamdiffusion/')
+    parser.add_argument('--root_path', type=str, default = '/home/luigi/Documents/DrEEam/src/DreamDiffusion/')
     parser.add_argument('--pretrain_mbm_path', type=str)
     parser.add_argument('--checkpoint_path', type=str)
     parser.add_argument('--crop_ratio', type=float)
@@ -232,7 +234,8 @@ if __name__ == '__main__':
     args = args.parse_args()
     config = Config_Generative_Model()
     config = update_config(args, config)
-    
+    config.pretrain_mbm_path = "/home/luigi/Documents/DrEEam/src/DreamDiffusion/pretrains/models/BENDR_encoder.pt"
+    #"/home/luigi/Documents/DrEEam/src/DreamDiffusion/pretrains/models/encoder_federica_checkpoint.pth"
     if config.checkpoint_path is not None:
         model_meta = torch.load(config.checkpoint_path, map_location='cpu')
         ckp = config.checkpoint_path

@@ -18,6 +18,11 @@ from tqdm import tqdm
 from torchvision.utils import make_grid
 from pytorch_lightning.utilities.distributed import rank_zero_only
 
+import sys
+
+from eegdataset import preprocess_EEG_data
+sys.path.append('/home/luigi/Documents/DrEEam/src/BENDR')
+from dn3_ext import _BENDREncoder
 from dc_ldm.util import log_txt_as_img, exists, default, ismap, isimage, mean_flat, count_params, instantiate_from_config
 from dc_ldm.modules.ema import LitEma
 from dc_ldm.modules.distributions.distributions import normal_kl, DiagonalGaussianDistribution
@@ -472,7 +477,7 @@ class DDPM(pl.LightningModule):
             self.full_validation(batch)
         else:
             # pass
-            grid, all_samples, state = self.generate(batch, ddim_steps=self.ddim_steps, num_samples=3, limit=5)
+            grid, all_samples, state = self.generate(batch, ddim_steps=self.ddim_steps, num_samples=3, limit=2)
             metric, metric_list = self.get_eval_metric(all_samples, avg=self.eval_avg)
             grid_imgs = Image.fromarray(grid.astype(np.uint8))
             # self.logger.log_image(key=f'samples_test', images=[grid_imgs])
@@ -738,6 +743,10 @@ class LatentDiffusion(DDPM):
 
     def get_learned_conditioning(self, c):
         # self.cond_stage_model.eval()
+        
+        if isinstance(self.cond_stage_model.mae, _BENDREncoder):
+            c = preprocess_EEG_data(c)
+        
         if hasattr(self.cond_stage_model, 'encode') and callable(self.cond_stage_model.encode):
             c, re_latent = self.cond_stage_model.encode(c)
             # c = self.cond_stage_model.encode(c)

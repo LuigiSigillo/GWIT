@@ -1,5 +1,5 @@
 import sys
-sys.path.append('../dreamdiffusion/code/')
+sys.path.append('/home/luigi/Documents/DrEEam/src/DreamDiffusion/code/')
 # print(sys.path)
 import sc_mbm.utils as ut
 import torch
@@ -441,8 +441,12 @@ class classify_network(nn.Module):
 class mapping(nn.Module):
     def __init__(self):
         super().__init__()
-        self.maxpool = nn.Conv1d(128, 1, 1, stride=1)#nn.AdaptiveAvgPool1d((1))
-        self.fc = nn.Linear(1024, 768)
+        # self.maxpool = nn.Conv1d(128, 1, 1, stride=1)#nn.AdaptiveAvgPool1d((1))
+        self.maxpool = nn.Conv1d(512, 1, 1, stride=1)#nn.AdaptiveAvgPool1d((1))
+
+        # self.fc = nn.Linear(1024, 768)
+        self.fc = nn.Linear(5, 768)
+
 
     def forward(self, x):
         x = self.maxpool(x)

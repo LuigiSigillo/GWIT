@@ -1,3 +1,4 @@
+exps/
 dataset/data_10-20/mne_data/*
 dataset/eeg_5_95_std.pth
 dataset/block_splits_by_image_single.pth

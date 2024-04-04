@@ -4,7 +4,7 @@ from functools import partial
 from PIL import Image
 # import clip
 import sys
-sys.path.append('../dreamdiffusion/code/')
+sys.path.append('/home/luigi/Documents/DrEEam/src/DreamDiffusion/code/')
 from einops import rearrange, repeat
 from transformers import CLIPTokenizer, CLIPTextModel, AutoProcessor, CLIPVisionModel, CLIPVisionModelWithProjection
 from dc_ldm.modules.x_transformer import Encoder, TransformerWrapper  # TODO: can we directly rely on lucidrains code and simply add this as a reuirement? --> test
@@ -278,7 +278,7 @@ if __name__ == "__main__":
 #         image_loss = contrastive_loss(similarity.t())
 #         return (caption_loss + image_loss) / 2.0
 
-#     input = Image.open('../dreamdiffusion/datasets/imageNet_images/n02106662/n02106662_1451.JPEG')
+#     input = Image.open('/home/luigi/Documents/DrEEam/src/DreamDiffusion/datasets/imageNet_images/n02106662/n02106662_1451.JPEG')
 
 #     from transformers import AutoProcessor, CLIPModel
 

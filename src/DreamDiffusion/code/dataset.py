@@ -15,6 +15,9 @@ from glob import glob
 import pickle
 
 from transformers import AutoProcessor
+import sys
+sys.path.append('/home/luigi/Documents/DrEEam/')
+from eegdataset import EEGImageNet
 def identity(x):
     return x
 def pad_to_patch_size(x, patch_size):
@@ -106,7 +109,7 @@ def is_npy_ext(fname: Union[str, Path]) -> bool:
     return f'{ext}' == 'npy'# type: ignore
 
 class eeg_pretrain_dataset(Dataset):
-    def __init__(self, path='../dreamdiffusion/datasets/mne_data/', roi='VC', patch_size=16, transform=identity, aug_times=2, 
+    def __init__(self, path='/home/luigi/Documents/DrEEam/src/DreamDiffusion/datasets/mne_data/', roi='VC', patch_size=16, transform=identity, aug_times=2, 
                 num_sub_limit=None, include_kam=False, include_hcp=True):
         super(eeg_pretrain_dataset, self).__init__()
         data = []
@@ -349,8 +352,10 @@ class EEGDataset(Dataset):
         image_name = self.images[self.data[i]["image"]]
         image_path = os.path.join(self.imagenet, image_name.split('_')[0], image_name+'.JPEG')
         # print(image_path)
-        image_raw = Image.open(image_path).convert('RGB') 
-        
+        try:
+            image_raw = Image.open(image_path).convert('RGB') 
+        except:
+            return None #use collate fn to filter the none
         image = np.array(image_raw) / 255.0
         image_raw = self.processor(images=image_raw, return_tensors="pt")
         image_raw['pixel_values'] = image_raw['pixel_values'].squeeze(0)
@@ -365,10 +370,15 @@ class Splitter:
     def __init__(self, dataset, split_path, split_num=0, split_name="train", subject=4):
         # Set EEG dataset
         self.dataset = dataset
+        # from sklearn.model_selection import train_test_split
+        # train_idx, test_idx = train_test_split(range(len(dataset)), test_size=0.8)
+        # self.split_idx =  train_idx if split_name=="train" else test_idx
+
         # Load split
         loaded = torch.load(split_path)
 
         self.split_idx = loaded["splits"][split_num][split_name]
+        
         # Filter data
         self.split_idx = [i for i in self.split_idx if i <= len(self.dataset.data) and 450 <= self.dataset.data[i]["eeg"].size(1) <= 600]
         # Compute size
@@ -386,12 +396,12 @@ class Splitter:
         return self.dataset[self.split_idx[i]]
 
 
-def create_EEG_dataset(eeg_signals_path='../dreamdiffusion/datasets/eeg_5_95_std.pth', 
-            splits_path = '../dreamdiffusion/datasets/block_splits_by_image_single.pth',
-            # splits_path = '../dreamdiffusion/datasets/block_splits_by_image_all.pth',
+def create_EEG_dataset(eeg_signals_path='/home/luigi/Documents/DrEEam/src/DreamDiffusion/datasets/eeg_5_95_std.pth', 
+            splits_path = '/home/luigi/Documents/DrEEam/src/DreamDiffusion/datasets/block_splits_by_image_single.pth',
+            # splits_path = '/home/luigi/Documents/DrEEam/src/DreamDiffusion/datasets/block_splits_by_image_all.pth',
             image_transform=identity, subject = 0):
     # if subject == 0:
-        # splits_path = '../dreamdiffusion/datasets/block_splits_by_image_all.pth'
+        # splits_path = '/home/luigi/Documents/DrEEam/src/DreamDiffusion/datasets/block_splits_by_image_all.pth'
     if isinstance(image_transform, list):
         dataset_train = EEGDataset(eeg_signals_path, image_transform[0], subject )
         dataset_test = EEGDataset(eeg_signals_path, image_transform[1], subject)
@@ -400,14 +410,16 @@ def create_EEG_dataset(eeg_signals_path='../dreamdiffusion/datasets/eeg_5_95_std
         dataset_test = EEGDataset(eeg_signals_path, image_transform, subject)
     split_train = Splitter(dataset_train, split_path = splits_path, split_num = 0, split_name = 'train', subject= subject)
     split_test = Splitter(dataset_test, split_path = splits_path, split_num = 0, split_name = 'test', subject = subject)
+   
+
+
     return (split_train, split_test)
 
 
 
 
-def create_EEG_dataset_r(eeg_signals_path='../dreamdiffusion/datasets/eeg_5_95_std.pth', 
-            # splits_path = '../dreamdiffusion/datasets/block_splits_by_image_single.pth',
-            splits_path = '../dreamdiffusion/datasets/block_splits_by_image_all.pth',
+def create_EEG_dataset_r(eeg_signals_path='/home/luigi/Documents/DrEEam/src/DreamDiffusion/datasets/eeg_5_95_std.pth', 
+            splits_path = '/home/luigi/Documents/DrEEam/src/DreamDiffusion/datasets/block_splits_by_image_all.pth',
             image_transform=identity):
     if isinstance(image_transform, list):
         dataset_train = EEGDataset_r(eeg_signals_path, image_transform[0])

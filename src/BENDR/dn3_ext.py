@@ -351,8 +351,8 @@ class _BENDREncoder(nn.Module):
         self.encoder_h = encoder_h
 
     def load(self, filename, strict=True):
-        state_dict = torch.load(filename)
-        self.load_state_dict(state_dict, strict=strict)
+        # state_dict = torch.load(filename) perche su dreamdiff é gia loaded
+        self.load_state_dict(filename, strict=strict)
 
     def save(self, filename):
         torch.save(self.state_dict(), filename)

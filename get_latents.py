@@ -1,10 +1,10 @@
 import torch
 from tqdm import tqdm
-from BENDR.dn3_ext import ConvEncoderBENDR
+from src.BENDR.dn3_ext import ConvEncoderBENDR
 from eegdataset import EEGImageNet
 
 if __name__ == "__main__":
-    encoder_file = "encoder.pt"
+    encoder_file = "/home/luigi/Documents/DrEEam/src/DreamDiffusion/pretrains/models/BENDR_encoder.pt"
     encoder = ConvEncoderBENDR(in_features=20, encoder_h=512)
     encoder.load(encoder_file, strict=True)
     encoder.freeze_features()
@@ -26,10 +26,15 @@ if __name__ == "__main__":
     print("Latents shape: ", latents.shape)
 
 
-encoder_file = "encoder.pt"
-encoder = ConvEncoderBENDR(in_features=20, encoder_h=512)
-encoder.load(encoder_file, strict=True)
-encoder.freeze_features()
-encoder = encoder.to('cuda')
-def get_latents():
-    pass
+# encoder_file = "encoder.pt"
+# encoder = ConvEncoderBENDR(in_features=20, encoder_h=512)
+# encoder.load(encoder_file, strict=True)
+# encoder.freeze_features()
+# encoder = encoder.to('cuda')
+
+
+
+
+# def get_latents(data):
+#     latents = encoder(data.cuda())
+#     return latents
