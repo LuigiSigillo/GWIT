@@ -153,6 +153,7 @@ class BaseProcess(object):
     def _get_batch(self, iterator):
         batch = [x.to(self.device) for x in next(iterator)]
         xforms = self._batch_transforms if self._training else self._eval_transforms
+        print("batch transform", xforms)
         for xform in xforms:
             if xform.only_trial_data:
                 batch[0] = xform(batch[0])

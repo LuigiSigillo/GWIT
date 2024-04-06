@@ -299,7 +299,11 @@ class BendingCollegeWav2Vec(BaseProcess):
         return logits.view(-1, logits.shape[-1])
 
     def forward(self, *inputs):
+        # print("Inputs shape: ", inputs[0].shape) # torch.Size([64, 128, 2543])
         z = self.encoder(inputs[0])
+        # print("Encoder shape: ", z.shape) # torch.Size([64, 512, 27])
+        # Encoder shape is [bs, encoder_h, original_len//(enc_downsample=3x2x2x2x2x2=96)]
+        # So if enc_downsample=(3,2) the len after encoder will be 424
 
         if self.permuted_encodings:
             z = z.permute([1, 2, 0])
@@ -318,7 +322,10 @@ class BendingCollegeWav2Vec(BaseProcess):
             mask[:, _make_span_from_seeds((samples // half_avg_num_seeds) * np.arange(half_avg_num_seeds).astype(int),
                                               self.mask_span)] = True
 
-        c = self.context_fn(z, mask)
+        c = self.context_fn(z, mask) 
+
+        # print("Context shape: ", c.shape) # torch.Size([64, 512, 28])
+        # Context shape is [bs, encoder_h, encoder_len+1]
 
         # Select negative candidates and generate labels for which are correct labels
         negatives, negative_inds = self._generate_negatives(z)

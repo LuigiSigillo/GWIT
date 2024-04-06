@@ -110,17 +110,17 @@ if __name__ == '__main__':
     generative_model = eLDM(pretrain_mbm_metafile, num_voxels,
                 device=device, pretrain_root=config.pretrain_gm_path, logger=config.logger,
                 ddim_steps=config.ddim_steps, global_pool=config.global_pool, use_time_cond=config.use_time_cond)
-
-    # m, u = model.load_state_dict(pl_sd, strict=False)
-    # generative_model.model.load_state_dict(sd['model_state_dict'], strict=False)
-    # print('load ldm successfully')
+    # print("use_time_cond: ", config.use_time_cond) # True
+    # print("global_pool: ", config.global_pool) # False
+    
+    generative_model.model.load_state_dict(sd['model_state_dict'], strict=False)
+    print('load ldm successfully')
     state = sd['state']
-    # print("state: ", state)
-    # exit()
+    
     os.makedirs(output_path, exist_ok=True)
-    # grid, _ = generative_model.generate(dataset_train, config.num_samples, 
-    #             config.ddim_steps, config.HW, 10) # generate 10 instances
-    # grid_imgs = Image.fromarray(grid.astype(np.uint8))
+    grid, _ = generative_model.generate(dataset_train, config.num_samples, 
+                config.ddim_steps, config.HW, 10) # generate 10 instances
+    grid_imgs = Image.fromarray(grid.astype(np.uint8))
     
     # grid_imgs.save(os.path.join(output_path, f'./samples_train.png'))
 

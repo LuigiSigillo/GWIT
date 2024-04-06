@@ -25,6 +25,7 @@ class PatchEmbed1D(nn.Module):
         B, C, V = x.shape # batch, channel, voxels
         # assert V == self.num_voxels, \
         #     f"Input fmri length ({V}) doesn't match model ({self.num_voxels})."
+        # proj(x) shape is [B, embed_dim, L] = torch.Size([5, 1024, 128])
         x = self.proj(x).transpose(1, 2).contiguous() # put embed_dim at the last dimension
         return x
 
@@ -340,7 +341,7 @@ class eeg_encoder(nn.Module):
         super().__init__()
         self.patch_embed = PatchEmbed1D(time_len, patch_size, in_chans, embed_dim)
 
-        num_patches = int(time_len / patch_size)
+        num_patches = int(time_len / patch_size) # 512 / 4 = 128
 
         self.num_patches = num_patches
         self.cls_token = nn.Parameter(torch.zeros(1, 1, embed_dim))
@@ -390,21 +391,21 @@ class eeg_encoder(nn.Module):
 
     def forward_encoder(self, x):
         # embed patches
+        # print("input shape: ", x.shape) # torch.Size([5, 128, 512])
         x = self.patch_embed(x)
-
+        # print("patch embed shape: ", x.shape) # torch.Size([5, 128, 1024])
         # add pos embed w/o cls token
-        # print(x.shape)
         # print(self.pos_embed[:, 1:, :].shape)
         x = x + self.pos_embed[:, 1:, :]
+        # print("pos embed shape: ", x.shape) # torch.Size([5, 128, 1024])
         # apply Transformer blocks
         for blk in self.blocks:
             x = blk(x)
-        # print(x.shape)
-        if self.global_pool:
+        # print("block shape: ", x.shape) # torch.Size([5, 128, 1024])
+        if self.global_pool: # false
             x = x.mean(dim=1, keepdim=True)
-        # print(x.shape)
         x = self.norm(x)
-        # print(x.shape)
+        # print("norm shape: ", x.shape) # torch.Size([5, 128, 1024])
         return x  
 
     def forward(self, imgs):

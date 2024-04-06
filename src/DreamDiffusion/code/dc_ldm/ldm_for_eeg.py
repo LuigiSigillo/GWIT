@@ -141,10 +141,13 @@ class cond_stage_model(nn.Module):
     def forward(self, x):
         # n, c, w = x.shape
         latent_crossattn = self.mae(x)
+        # print("latent_crossattn: ", latent_crossattn.shape) # torch.Size([5, 128, 1024])
         latent_return = latent_crossattn
         if self.global_pool == False:
             latent_crossattn = self.channel_mapper(latent_crossattn)
+            # print("latent_crossattn after channel mapper: ", latent_crossattn.shape) # torch.Size([5, 77, 1024])
         latent_crossattn = self.dim_mapper(latent_crossattn)
+        # print("latent_crossattn after dim mapper: ", latent_crossattn.shape) # torch.Size([5, 77, 768])
         out = latent_crossattn
         return out, latent_return
 
@@ -179,6 +182,7 @@ class eLDM:
         config.model.params.unet_config.params.global_pool = global_pool
 
         self.cond_dim = config.model.params.unet_config.params.context_dim
+        print("cond_dim: ", self.cond_dim)
 
         model = instantiate_from_config(config.model)
         pl_sd = torch.load(self.ckp_path, map_location="cpu")['state_dict']
