@@ -315,15 +315,16 @@ class BendingCollegeWav2Vec(BaseProcess):
         if self._training:
             mask = _make_mask((batch_size, samples), self.mask_rate, samples, self.mask_span)
         else:
-            mask = torch.zeros((batch_size, samples), requires_grad=False, dtype=torch.bool)
-            half_avg_num_seeds = max(1, int(samples * self.mask_rate * 0.5))
-            if samples <= self.mask_span * half_avg_num_seeds:
-                raise ValueError("Masking the entire span, pointless.")
-            mask[:, _make_span_from_seeds((samples // half_avg_num_seeds) * np.arange(half_avg_num_seeds).astype(int),
-                                              self.mask_span)] = True
+            # mask = torch.zeros((batch_size, samples), requires_grad=False, dtype=torch.bool)
+            # half_avg_num_seeds = max(1, int(samples * self.mask_rate * 0.5))
+            # if samples <= self.mask_span * half_avg_num_seeds:
+            #     raise ValueError("Masking the entire span, pointless.")
+            # mask[:, _make_span_from_seeds((samples // half_avg_num_seeds) * np.arange(half_avg_num_seeds).astype(int),
+            #                                   self.mask_span)] = True
+            ##### SAME MASKING AS TRAIN ####
+            mask = _make_mask((batch_size, samples), self.mask_rate, samples, self.mask_span) 
 
         c = self.context_fn(z, mask) 
-
         # print("Context shape: ", c.shape) # torch.Size([64, 512, 28])
         # Context shape is [bs, encoder_h, encoder_len+1]
 
@@ -332,7 +333,7 @@ class BendingCollegeWav2Vec(BaseProcess):
 
         # Prediction -> batch_size x predict_length x predict_length
         logits = self._calculate_similarity(unmasked_z, c, negatives)
-        return logits, z, mask
+        return logits, z, mask, c
 
     @staticmethod
     def _mask_pct(inputs, outputs):
@@ -341,7 +342,7 @@ class BendingCollegeWav2Vec(BaseProcess):
     @staticmethod
     def _contrastive_accuracy(inputs, outputs):
         logits = outputs[0]
-        labels = torch.zeros(logits.shape[0], device=logits.device, dtype=torch.long)
+        labels = torch.zeros(logits.shape[0], device=logits.device, dtype=torch.long) # labels is 0 because that is the position of the positive pair (check _simple_accuracy)
         return StandardClassification._simple_accuracy([labels], logits)
 
     def calculate_loss(self, inputs, outputs):
@@ -358,8 +359,8 @@ class _BENDREncoder(nn.Module):
         self.encoder_h = encoder_h
 
     def load(self, filename, strict=True):
-        # state_dict = torch.load(filename) perche su dreamdiff é gia loaded
-        self.load_state_dict(filename, strict=strict)
+        state_dict = torch.load(filename) #perche su dreamdiff é gia loaded
+        self.load_state_dict(state_dict, strict=strict)
 
     def save(self, filename):
         torch.save(self.state_dict(), filename)
@@ -570,8 +571,10 @@ class BENDRContextualizer(nn.Module):
 
         if mask_t is not None:
             x.transpose(2, 1)[mask_t] = self.mask_replacement
+            # print("Masked t")
         if mask_c is not None:
             x[mask_c] = 0
+            # print("Masked c")
 
         if self.position_encoder:
             x = x + self.relative_position(x)

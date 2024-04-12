@@ -7,11 +7,10 @@ import torch
 from torch.utils.data import Dataset
 from scipy.interpolate import interp1d
 from pathlib import Path
-from sklearn.model_selection import train_test_split
 from tqdm import tqdm
 
 class MOABB(Dataset):
-    def __init__(self, root_dir, in_channels=128, data_len=960, corrupted_files='corrupted_files.json', load_preprocessed=False, redo_preprocessing=False):
+    def __init__(self, root_dir, in_channels=128, data_len=960, corrupted_files='dataset/moabb/corrupted_files.json', load_preprocessed=False, redo_preprocessing=False):
         self.root_dir = root_dir
         self.data_chan = in_channels
         self.data_len = data_len

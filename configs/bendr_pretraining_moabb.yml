@@ -20,15 +20,15 @@ optimizer_params:
 
 bending_college_args:
   mask_rate: 0.065
-  mask_span: 3
+  # mask_span: 5
   layer_drop: 0.01
   multi_gpu: False
   temp: 0.1
   encoder_grad_frac: 0.1
   num_negatives: 20
   enc_feat_l2: 1.0
-  enc_downsample: [3, 2, 2] # testare se cpu dipende da questo o mask_span
-  enc_width: [3, 2, 2]
+  enc_downsample: [3, 2] # testare se cpu dipende da questo o mask_span
+  enc_width: [3, 2]
 
 dataset:
   in_channels: 128

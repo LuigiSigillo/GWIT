@@ -1,4 +1,5 @@
 import random
+from pandas import DataFrame
 import torch
 from tqdm import tqdm
 import argparse
@@ -26,8 +27,6 @@ def parse_args():
     parser.add_argument('--dataset_folder', default='/mnt/media/lopez/moabb', help='Path to the dataset')
     parser.add_argument('--seed', default=0, type=int, help='Seed for reproducibility')
     return parser.parse_args()
-
-
 
 def create_dataloaders(path,**kwargs):
     data = MOABB(root_dir=path, **kwargs)
@@ -115,10 +114,9 @@ if __name__ == '__main__':
     
     print('Training completed, now evaluating...')
     # print(process.evaluate(test_loader))
-    print(process.efficient_evaluate(test_loader))
-    # Save checkpoint
-    print('Saving checkpoint configuration...')
-    #torch.save(process.state_dict(), '/home/beingfedericax/moab3.9/BENDR/checkpoints/checkpoint.pth')
+    test_metrics = process.efficient_evaluate(test_loader)
+    print(test_metrics)
+    wandb.log({f'test_{k}' if k != 'epoch' else k: v for k, v in test_metrics.items()})
 
     if not args.no_save:
         if not os.path.exists('checkpoints'):
