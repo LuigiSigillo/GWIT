@@ -326,7 +326,15 @@ class EEGDataset(Dataset):
         # Compute size
         self.size = len(self.data)
         self.processor = AutoProcessor.from_pretrained("openai/clip-vit-large-patch14")
-
+        
+        self.data_l = [torch.tensor(item["eeg"])[:,20:460] for item in self.data]
+        # # pad all tensors to have same length
+        # self.data_l = torch.nn.utils.rnn.pad_sequence(self.data_l, batch_first=True)
+        # stack them
+        # self.data_l = self.data_l.permute(0,2,1)
+        self.mean = torch.mean(torch.stack(self.data_l))
+        self.std = torch.std(torch.stack(self.data_l))
+        del self.data_l
     # Get size
     def __len__(self):
         return self.size
@@ -335,16 +343,21 @@ class EEGDataset(Dataset):
     def __getitem__(self, i):
         # Process EEG
         # print(self.data[i])
-        eeg = self.data[i]["eeg"].float().t()
-
-        eeg = eeg[20:460,:]
+        # eeg = self.data[i]["eeg"].float().t()
+        eeg = self.data[i]["eeg"].float()
+        eeg = eeg[:,20:460]
         ##### 2023 2 13 add preprocess and transpose
-        eeg = np.array(eeg.transpose(0,1))
-        x = np.linspace(0, 1, eeg.shape[-1])
-        x2 = np.linspace(0, 1, self.data_len)
-        f = interp1d(x, eeg)
-        eeg = f(x2)
-        eeg = torch.from_numpy(eeg).float()
+        ### lopex noon la vuole piu
+        # eeg = np.array(eeg.transpose(0,1))
+        # x = np.linspace(0, 1, eeg.shape[-1])
+        # x2 = np.linspace(0, 1, self.data_len)
+        # f = interp1d(x, eeg)
+        # eeg = f(x2)
+        # eeg = torch.from_numpy(eeg).float()
+        
+        #normalize eeg
+        eeg = (eeg - self.mean) / self.std
+
         ##### 2023 2 13 add preprocess
         label = torch.tensor(self.data[i]["label"]).long()
 

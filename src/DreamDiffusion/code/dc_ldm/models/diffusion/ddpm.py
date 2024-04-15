@@ -743,9 +743,10 @@ class LatentDiffusion(DDPM):
 
     def get_learned_conditioning(self, c):
         # self.cond_stage_model.eval()
-        
-        if isinstance(self.cond_stage_model.mae, _BENDREncoder):
-            c = preprocess_EEG_data(c)
+
+        #with new bender not needed        
+        # if isinstance(self.cond_stage_model.mae, _BENDREncoder):
+        #     c = preprocess_EEG_data(c)
         
         if hasattr(self.cond_stage_model, 'encode') and callable(self.cond_stage_model.encode):
             c, re_latent = self.cond_stage_model.encode(c)

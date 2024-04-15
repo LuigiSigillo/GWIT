@@ -19,11 +19,11 @@ from eval_metrics import get_similarity_metric
 
 
 def wandb_init(config, output_path):
-    # wandb.init( project='dreamdiffusion',
-    #             group="stageB_dc-ldm",
-    #             anonymous="allow",
-    #             config=config,
-    #             reinit=True)
+    wandb.init( project='dreamdiffusion',
+                # group="stageB_dc-ldm",
+                # anonymous="allow",
+                config=config,
+                reinit=True)
     create_readme(config, output_path)
 
 def wandb_finish():
@@ -73,7 +73,7 @@ def generate_images(generative_model, eeg_latents_dataset_train, eeg_latents_dat
                 config.ddim_steps, config.HW, 10) # generate 10 instances
     grid_imgs = Image.fromarray(grid.astype(np.uint8))
     grid_imgs.save(os.path.join(config.output_path, 'samples_train.png'))
-    # wandb.log({'summary/samples_train': wandb.Image(grid_imgs)})
+    wandb.log({'summary/samples_train': wandb.Image(grid_imgs)})
 
     grid, samples = generative_model.generate(eeg_latents_dataset_test, config.num_samples, 
                 config.ddim_steps, config.HW)
@@ -85,13 +85,13 @@ def generate_images(generative_model, eeg_latents_dataset_train, eeg_latents_dat
             Image.fromarray(img).save(os.path.join(config.output_path, 
                             f'./test{sp_idx}-{copy_idx}.png'))
 
-    # wandb.log({f'summary/samples_test': wandb.Image(grid_imgs)})
+    wandb.log({f'summary/samples_test': wandb.Image(grid_imgs)})
 
     metric, metric_list = get_eval_metric(samples, avg=config.eval_avg)
     metric_dict = {f'summary/pair-wise_{k}':v for k, v in zip(metric_list[:-2], metric[:-2])}
     metric_dict[f'summary/{metric_list[-2]}'] = metric[-2]
     metric_dict[f'summary/{metric_list[-1]}'] = metric[-1]
-    # wandb.log(metric_dict)
+    wandb.log(metric_dict)
 
 def normalize(img):
     if img.shape[-1] == 3:
@@ -234,7 +234,7 @@ if __name__ == '__main__':
     args = args.parse_args()
     config = Config_Generative_Model()
     config = update_config(args, config)
-    config.pretrain_mbm_path = "/home/luigi/Documents/DrEEam/src/DreamDiffusion/pretrains/models/BENDR_encoder.pt"
+    config.pretrain_mbm_path = "/home/lopez/Documents/DrEEam/checkpoints/romulan-phaser-63_encoder_best_val.pt"
     #"/home/luigi/Documents/DrEEam/src/DreamDiffusion/pretrains/models/encoder_federica_checkpoint.pth"
     if config.checkpoint_path is not None:
         model_meta = torch.load(config.checkpoint_path, map_location='cpu')
@@ -249,6 +249,6 @@ if __name__ == '__main__':
     
     wandb_init(config, output_path)
 
-    # logger = WandbLogger()
-    config.logger = None # logger
+    logger = WandbLogger()
+    config.logger =  logger
     main(config)

@@ -25,8 +25,8 @@ class wandb_logger:
     def __init__(self, config):
         wandb.init(
                     project="dreamdiffusion",
-                    anonymous="allow",
-                    group='stageA_sc-mbm',
+                    # anonymous="allow",
+                    # group='stageA_sc-mbm',
                     config=config,
                     reinit=True)
 

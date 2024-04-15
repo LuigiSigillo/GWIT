@@ -79,7 +79,7 @@ if __name__ == "__main__":
     dataset.plot_eeg(1)
 
 import torch
-def preprocess_EEG_data(batch_torch, resample=True):
+def preprocess_EEG_data(batch_torch, resample=False):
     #take only the channels of interest 10-20
     batch_torch = batch_torch[:,[1,2,3,4,5,6,7, 12, 13,14,15, 16, 23, 27, 24, 25, 26, 29, 31 ],:]
     # Discard first 20 seconds of EEG data and trim to 440 seconds
@@ -108,5 +108,5 @@ def preprocess_EEG_data(batch_torch, resample=True):
         resampled = np.concatenate((resampled, new_channel.cpu().numpy()[..., :resampled.shape[-1]]), axis=1)
         # print(resampled.shape) #(11965, 20, 113)
         data = torch.from_numpy(resampled).to("cuda").requires_grad_(data.requires_grad)
-    print(data.shape)
+    # print(data.shape)
     return data

@@ -34,8 +34,8 @@ def normalize(img):
 
 def wandb_init(config):
     wandb.init( project="dreamdiffusion",
-                group='eval',
-                anonymous="allow",
+                # group='eval',
+                # anonymous="allow",
                 config=config,
                 reinit=True)
 

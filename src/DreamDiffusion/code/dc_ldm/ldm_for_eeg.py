@@ -100,23 +100,29 @@ class cond_stage_model(nn.Module):
         # prepare pretrained fmri mae 
         if metafile is not None:
             print("Loading encoder from checkpoint")
-            model  = ConvEncoderBENDR(in_features=20, encoder_h=512)
+
+            model  = ConvEncoderBENDR(in_features=128, 
+                               encoder_h=512, 
+                               enc_downsample=[3, 2] , 
+                               enc_width=[3, 2] )
             model.load(metafile, strict=True)
-            model.freeze_features()
+            # model.freeze_features()
             model = model.to('cuda')
         else:
             print("Initializing encoder from scratch")
             model = ConvEncoderBENDR(in_features=20, encoder_h=512)
         self.mae = model
+        self.fmri_latent_dim = 512 #model.encoder_h
+        self.fmri_seq_len = 74# 86
+    
+        # self.fmri_seq_len = model.num_patches
+        # self.fmri_latent_dim = model.embed_dim
         if clip_tune:
-            self.mapping = mapping()
+            self.mapping = mapping(self.fmri_seq_len,  self.fmri_latent_dim)
         if cls_tune:
             self.cls_net = classify_network()
 
-        # self.fmri_seq_len = model.num_patches
-        # self.fmri_latent_dim = model.embed_dim
-        self.fmri_latent_dim = 5 #model.encoder_h
-        self.fmri_seq_len = 512
+
 
 
         if global_pool == False:
@@ -141,6 +147,8 @@ class cond_stage_model(nn.Module):
     def forward(self, x):
         # n, c, w = x.shape
         latent_crossattn = self.mae(x)
+        #bender has shape inverted
+        latent_crossattn = latent_crossattn.permute(0, 2, 1)
         # print("latent_crossattn: ", latent_crossattn.shape) # torch.Size([5, 128, 1024])
         latent_return = latent_crossattn
         if self.global_pool == False:
