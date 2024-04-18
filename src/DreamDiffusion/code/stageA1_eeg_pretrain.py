@@ -18,6 +18,8 @@ from sc_mbm.trainer import train_one_epoch, eval_one_epoch
 from sc_mbm.trainer import NativeScalerWithGradNormCount as NativeScaler
 from sc_mbm.utils import save_model
 
+import sys
+sys.path.append('.')
 from pretrain_eeg_moabb import create_dataloaders
 
 os.environ["WANDB_START_METHOD"] = "thread"
@@ -130,17 +132,18 @@ def main(config):
     def collate_fn(batch):
         batch = torch.utils.data.dataloader.default_collate(batch)[0]
         return {'eeg': batch}
+
     train_loader, test_loader, val_loader = create_dataloaders('/mnt/media/lopez/moabb', 
-                                                               data_len=1026, 
-                                                               load_preprocessed=True, 
                                                                batch_size=config.batch_size,
-                                                               collate_fn=collate_fn)
+                                                               collate_fn=collate_fn,
+                                                               data_len=1024, # 1024 instead of 1026 s.t. it is divisible by pathc_size=4
+                                                               load_preprocessed=True,)
     print('Dataloaders created')
 
     print("Num training samples: ", len(train_loader.dataset))
     print("Num test samples: ", len(test_loader.dataset))
     print("Num val samples: ", len(val_loader.dataset))
-    print("Dataloader shape: ", next(iter(train_loader))[0].shape, len(next(iter(train_loader))))
+    print("Dataloader shape: ", next(iter(train_loader))['eeg'].shape, len(next(iter(train_loader))))
    
     # print(f'Dataset size: {len(dataset_pretrain)}\n Time len: {dataset_pretrain.data_len}')
     dataset_pretrain = train_loader.dataset
@@ -152,8 +155,8 @@ def main(config):
 
     # create model
     # config.time_len=dataset_pretrain.data_len
-    config.time = 1026
-    model = MAEforEEG(time_len=1026, patch_size=config.patch_size, embed_dim=config.embed_dim,
+    config.time = 1024
+    model = MAEforEEG(time_len=1024, patch_size=config.patch_size, embed_dim=config.embed_dim,
                     decoder_embed_dim=config.decoder_embed_dim, depth=config.depth, 
                     num_heads=config.num_heads, decoder_num_heads=config.decoder_num_heads, mlp_ratio=config.mlp_ratio,
                     focus_range=config.focus_range, focus_rate=config.focus_rate, 
@@ -223,7 +226,10 @@ def main(config):
 
 @torch.no_grad()
 def plot_recon_figures(model, device, dataset, output_path, num_figures = 5, config=None, logger=None, model_without_ddp=None, type='train'):
-    dataloader = DataLoader(dataset, batch_size=1, shuffle=True)
+    def collate_fn(batch):
+        batch = torch.utils.data.dataloader.default_collate(batch)[0]
+        return {'eeg': batch}
+    dataloader = DataLoader(dataset, batch_size=1, shuffle=True, collate_fn=collate_fn)
     model.eval()
     fig, axs = plt.subplots(num_figures, 3, figsize=(30,15))
     fig.tight_layout()

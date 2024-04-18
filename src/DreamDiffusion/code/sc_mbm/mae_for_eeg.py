@@ -1,5 +1,5 @@
 import sys
-sys.path.append('/home/luigi/Documents/DrEEam/src/DreamDiffusion/code/')
+sys.path.append('/home/luigi/Documents/DrEEam/src/DreamDiffusion/code/') # forse va tolto luigi??
 # print(sys.path)
 import sc_mbm.utils as ut
 import torch

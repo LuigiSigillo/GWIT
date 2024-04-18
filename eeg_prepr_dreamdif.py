@@ -103,6 +103,8 @@ class MOABB(Dataset):
             dataset_name = data_path.split("/")[-1].split("_")[0]
             subject_number = data_path.split("/")[-1].split("_")[2]
             data = self.preprocess(data, dataset_name, subject_number)
+        elif self.data_len < data.shape[-1]:
+            data = data[:, :self.data_len]
 
         data = torch.from_numpy(data).float()
         return [data] # return list because the dataloader expects a list of tensors where the first element is the batch input
