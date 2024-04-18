@@ -28,7 +28,7 @@ def parse_args():
     parser.add_argument('--seed', default=0, type=int, help='Seed for reproducibility')
     return parser.parse_args()
 
-def create_dataloaders(path,**kwargs):
+def create_dataloaders(path, batch_size=64, collate_fn=None, **kwargs):
     data = MOABB(root_dir=path, **kwargs)
     print("Num samples: ", len(data))
     train_size = int(0.7 * len(data))
@@ -39,9 +39,9 @@ def create_dataloaders(path,**kwargs):
     train_data, test_data = torch.utils.data.random_split(data, [train_size + val_size, test_size])
     train_data, val_data = torch.utils.data.random_split(train_data, [train_size, val_size])
 
-    train_loader = torch.utils.data.DataLoader(train_data, batch_size=64, shuffle=True) 
-    val_loader = torch.utils.data.DataLoader(val_data, batch_size=64, shuffle=False)
-    test_loader = torch.utils.data.DataLoader(test_data, batch_size=64, shuffle=False)
+    train_loader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, shuffle=True, collate_fn=collate_fn) 
+    val_loader = torch.utils.data.DataLoader(val_data, batch_size=batch_size, shuffle=False, collate_fn=collate_fn)
+    test_loader = torch.utils.data.DataLoader(test_data, batch_size=batch_size, shuffle=False, collate_fn=collate_fn)
     return train_loader, test_loader, val_loader
 
 if __name__ == '__main__':

@@ -81,9 +81,10 @@ if __name__ == "__main__":
 import torch
 def preprocess_EEG_data(batch_torch, resample=False):
     #take only the channels of interest 10-20
+    # print("batch_torch shape: ", batch_torch.shape) 
     batch_torch = batch_torch[:,[1,2,3,4,5,6,7, 12, 13,14,15, 16, 23, 27, 24, 25, 26, 29, 31 ],:]
     # Discard first 20 seconds of EEG data and trim to 440 seconds
-    batch_torch = batch_torch[:, :, 20:20+440] #(#,19,519) --> (#,19,440)
+    # batch_torch = batch_torch[:, :, 20:20+440] #(#,19,519) --> (#,19,440) # non serve più visto che gigi l'ha messo in EEGDataset di dreamdiff
     # print("Preprocessing EEG data...")
     # Compute and add the new channel
     min_data, max_data = -60.032818, 56.274456
