@@ -15,9 +15,7 @@ from glob import glob
 import pickle
 
 from transformers import AutoProcessor
-import sys
-sys.path.append('/home/luigi/Documents/DrEEam/')
-from eegdataset import EEGImageNet
+
 def identity(x):
     return x
 def pad_to_patch_size(x, patch_size):

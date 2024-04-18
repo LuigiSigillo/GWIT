@@ -20,9 +20,7 @@ from pytorch_lightning.utilities.distributed import rank_zero_only
 
 import sys
 
-from eegdataset import preprocess_EEG_data
-sys.path.append('/home/luigi/Documents/DrEEam/src/BENDR')
-from dn3_ext import _BENDREncoder
+
 from dc_ldm.util import log_txt_as_img, exists, default, ismap, isimage, mean_flat, count_params, instantiate_from_config
 from dc_ldm.modules.ema import LitEma
 from dc_ldm.modules.distributions.distributions import normal_kl, DiagonalGaussianDistribution

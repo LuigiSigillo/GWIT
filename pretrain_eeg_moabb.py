@@ -10,7 +10,7 @@ import wandb
 import yaml
 from easydict import EasyDict as edict
 from eeg_prepr_dreamdif import MOABB
-sys.path.append("/home/beingfedericax/moab3.9/dn3/dn3")
+# sys.path.append("/home/beingfedericax/moab3.9/dn3/dn3")
 
 from src.BENDR.dn3_ext import BendingCollegeWav2Vec, ConvEncoderBENDR, BENDRContextualizer
 from dn3.transforms.batch import RandomTemporalCrop

@@ -3,8 +3,8 @@ import torch.nn as nn
 from functools import partial
 from PIL import Image
 # import clip
-import sys
-sys.path.append('/home/luigi/Documents/DrEEam/src/DreamDiffusion/code/')
+# import sys
+# sys.path.append('/home/luigi/Documents/DrEEam/src/DreamDiffusion/code/')
 from einops import rearrange, repeat
 from transformers import CLIPTokenizer, CLIPTextModel, AutoProcessor, CLIPVisionModel, CLIPVisionModelWithProjection
 from dc_ldm.modules.x_transformer import Encoder, TransformerWrapper  # TODO: can we directly rely on lucidrains code and simply add this as a reuirement? --> test
