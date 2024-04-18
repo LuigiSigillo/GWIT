@@ -51,7 +51,7 @@ class random_crop:
 def get_args_parser():
     parser = argparse.ArgumentParser('Double Conditioning LDM Finetuning', add_help=False)
     # project parameters
-    parser.add_argument('--root', type=str, default='/home/lopez/Documents/DrEEam/src/DreamDiffusion/')
+    parser.add_argument('--root', type=str, default='/home/luigi/Documents/DrEEam/src/DreamDiffusion/')
     parser.add_argument('--dataset', type=str, default='GOD')
     parser.add_argument('--model_path', type=str)
 
@@ -63,12 +63,12 @@ if __name__ == '__main__':
     args = args.parse_args()
     root = args.root
     target = args.dataset
-    args.model_path = "/home/luigi/Documents/DrEEam/src/DreamDiffusion/pretrains/models/checkpoint_DreamDiff.pth"
+    args.model_path = "/home/luigi/Documents/DrEEam/src/DreamDiffusion/exps/results/generation/15-04-2024-15-30-11/checkpoint_best.pth"
     sd = torch.load(args.model_path, map_location='cpu')
     config = sd['config']
     # update paths
     config.root_path = root
-    config.pretrain_mbm_path = '/home/luigi/Documents/DrEEam/src/DreamDiffusion/pretrains/models/encoder_github_checkpoint.pth'
+    config.pretrain_mbm_path = "/home/lopez/Documents/DrEEam/checkpoints/romulan-phaser-63_encoder_best_val.pt" #'/home/luigi/Documents/DrEEam/src/DreamDiffusion/pretrains/models/encoder_github_checkpoint.pth'
     config.pretrain_gm_path = '/home/luigi/Documents/DrEEam/src/DreamDiffusion/pretrains/'
     print(config.__dict__)
 

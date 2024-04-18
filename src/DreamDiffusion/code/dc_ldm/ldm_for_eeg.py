@@ -167,7 +167,9 @@ class cond_stage_model(nn.Module):
         return self.cls_net(x)
 
     def get_clip_loss(self, x, image_embeds):
-        # image_embeds = self.image_embedder(image_inputs)
+        #image embeds shape (#,768)
+        #x shape (#,74, 512)
+        # image_embeds = self.image_embedder(image_inputs) 
         target_emb = self.mapping(x)
         # similarity_matrix = nn.functional.cosine_similarity(target_emb.unsqueeze(1), image_embeds.unsqueeze(0), dim=2)
         # loss = clip_loss(similarity_matrix)
