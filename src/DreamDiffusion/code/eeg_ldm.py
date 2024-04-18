@@ -155,9 +155,12 @@ def main(config):
     # prepare pretrained mbm 
 
     if config.pretrain_mbm_path is not None:
-        pretrain_mbm_metafile = torch.load(config.pretrain_mbm_path, map_location='cpu')
+        #commented the loading for BENDR 
+        pretrain_mbm_metafile = config.pretrain_mbm_path #torch.load(config.pretrain_mbm_path, map_location='cpu')
+        # print('pretrain_mbm_path:', config.pretrain_mbm_path)
     else:
         pretrain_mbm_metafile = None
+    
     # create generateive model
     generative_model = eLDM(pretrain_mbm_metafile, num_voxels,
                 device=device, pretrain_root=config.pretrain_gm_path, logger=config.logger, 

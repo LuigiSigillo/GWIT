@@ -170,6 +170,7 @@ class cond_stage_model(nn.Module):
         #image embeds shape (#,768)
         #x shape (#,74, 512)
         # image_embeds = self.image_embedder(image_inputs) 
+        #x.shape (#,77,768)
         target_emb = self.mapping(x)
         # similarity_matrix = nn.functional.cosine_similarity(target_emb.unsqueeze(1), image_embeds.unsqueeze(0), dim=2)
         # loss = clip_loss(similarity_matrix)

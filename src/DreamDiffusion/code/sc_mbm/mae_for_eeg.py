@@ -442,16 +442,18 @@ class classify_network(nn.Module):
 class mapping(nn.Module):
     def __init__(self, in_channels=128, fc_channels=512):
         super().__init__()
-        self.maxpool = nn.Conv1d(in_channels, 1, 1, stride=1)#nn.AdaptiveAvgPool1d((1))
+        # self.maxpool = nn.Conv1d(in_channels, 1, 1, stride=1)
+        self.adaptive = nn.AdaptiveAvgPool1d((1))
 
         # self.fc = nn.Linear(1024, 768)
         self.fc = nn.Linear(fc_channels, 768)
 
 
     def forward(self, x):
-        x = self.maxpool(x)
-        x = x.squeeze(1)
-        x = self.fc(x)
+        # x = self.maxpool(x)
+        x = self.adaptive(x.transpose(1,2))
+        x = x.squeeze()
+        # x = self.fc(x)
         return x
 
 
