@@ -27,7 +27,7 @@ bending_college_args:
   encoder_grad_frac: 0.1
   num_negatives: 20
   enc_feat_l2: 1.0
-  enc_downsample: [3, 2] # testare se cpu dipende da questo o mask_span
+  enc_downsample: [3, 2]
   enc_width: [3, 2]
 
 dataset:

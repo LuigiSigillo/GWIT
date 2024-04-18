@@ -315,14 +315,14 @@ class BendingCollegeWav2Vec(BaseProcess):
         if self._training:
             mask = _make_mask((batch_size, samples), self.mask_rate, samples, self.mask_span)
         else:
-            # mask = torch.zeros((batch_size, samples), requires_grad=False, dtype=torch.bool)
-            # half_avg_num_seeds = max(1, int(samples * self.mask_rate * 0.5))
-            # if samples <= self.mask_span * half_avg_num_seeds:
-            #     raise ValueError("Masking the entire span, pointless.")
-            # mask[:, _make_span_from_seeds((samples // half_avg_num_seeds) * np.arange(half_avg_num_seeds).astype(int),
-            #                                   self.mask_span)] = True
+            mask = torch.zeros((batch_size, samples), requires_grad=False, dtype=torch.bool)
+            half_avg_num_seeds = max(1, int(samples * self.mask_rate * 0.5))
+            if samples <= self.mask_span * half_avg_num_seeds:
+                raise ValueError("Masking the entire span, pointless.")
+            mask[:, _make_span_from_seeds((samples // half_avg_num_seeds) * np.arange(half_avg_num_seeds).astype(int),
+                                              self.mask_span)] = True
             ##### SAME MASKING AS TRAIN ####
-            mask = _make_mask((batch_size, samples), self.mask_rate, samples, self.mask_span) 
+            # mask = _make_mask((batch_size, samples), self.mask_rate, samples, self.mask_span) 
 
         c = self.context_fn(z, mask) 
         # print("Context shape: ", c.shape) # torch.Size([64, 512, 28])
@@ -359,8 +359,8 @@ class _BENDREncoder(nn.Module):
         self.encoder_h = encoder_h
 
     def load(self, filename, strict=True):
-        # state_dict = torch.load(filename) #perche su dreamdiff é gia loaded
-        self.load_state_dict(filename, strict=strict)
+        state_dict = torch.load(filename) #perche su dreamdiff é gia loaded
+        self.load_state_dict(state_dict, strict=strict) #luigi non lo modificare più
 
     def save(self, filename):
         torch.save(self.state_dict(), filename)
