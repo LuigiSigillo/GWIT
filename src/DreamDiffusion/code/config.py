@@ -15,13 +15,14 @@ class Config_MBM_EEG(Config_MAE_fMRI):
         self.lr = 2.5e-4
         self.min_lr = 0.
         self.weight_decay = 0.05
-        self.num_epoch = 500
+        # self.num_epoch = 500
+        self.num_epoch = 1
         self.warmup_epochs = 40
-        self.batch_size = 128
+        self.batch_size = 32
         self.clip_grad = 0.8
         
         # Model Parameters
-        self.mask_ratio = 0.1
+        self.mask_ratio = 0.75
         self.patch_size = 4 #  1
         self.embed_dim = 1024 #256 # has to be a multiple of num_heads
         self.decoder_embed_dim = 512 #128
@@ -31,8 +32,8 @@ class Config_MBM_EEG(Config_MAE_fMRI):
         self.mlp_ratio = 1.0
 
         # Project setting
-        self.root_path = '/home/luigi/Documents/DrEEam/src/DreamDiffusion/'
-        self.output_path = '/home/luigi/Documents/DrEEam/src/DreamDiffusion/exps/'
+        self.root_path = 'src/DreamDiffusion/'
+        self.output_path = 'src/DreamDiffusion/exps/' # non lo usa (almeno nel pretrain)
         self.seed = 2022
         self.roi = 'VC'
         self.aug_times = 1

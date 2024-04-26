@@ -1,5 +1,6 @@
 import math, sys
 import torch
+from tqdm import tqdm
 import sc_mbm.utils as ut
 from torch._six import inf
 import numpy as np
@@ -57,7 +58,8 @@ def train_one_epoch(model, data_loader, optimizer, device, epoch,
     total_loss = []
     total_cor = []
     accum_iter = config.accum_iter
-    for data_iter_step, (data_dcit) in enumerate(data_loader):
+    bar = tqdm(enumerate(data_loader), total=len(data_loader), desc=f'Training - Epoch {epoch}')
+    for data_iter_step, (data_dcit) in bar:
         
         # we use a per iteration (instead of per epoch) lr scheduler
         # print(data_iter_step)
@@ -115,17 +117,18 @@ def train_one_epoch(model, data_loader, optimizer, device, epoch,
         total_cor.append(cor)
         if device == torch.device('cuda:0'):
             lr = optimizer.param_groups[0]["lr"]
-            print('train_loss_step:', np.mean(total_loss), 'lr:', lr, 'cor', np.mean(total_cor))
+            # print('train_loss_step:', np.mean(total_loss), 'lr:', lr, 'cor', np.mean(total_cor))
+        bar.set_postfix(loss=np.mean(total_loss), cor=np.mean(total_cor), lr=optimizer.param_groups[0]["lr"])
 
     if log_writer is not None:
         lr = optimizer.param_groups[0]["lr"]
-        log_writer.log('train_loss_step', np.mean(total_loss), step=epoch)
+        log_writer.log('train_loss', np.mean(total_loss), step=epoch)
         log_writer.log('lr', lr, step=epoch)
-        log_writer.log('cor', np.mean(total_cor), step=epoch)
+        log_writer.log('train_cor', np.mean(total_cor), step=epoch)
         if start_time is not None:
             log_writer.log('time (min)', (time.time() - start_time)/60.0, step=epoch)
     if config.local_rank == 0:        
-        print(f'[Epoch {epoch}] loss: {np.mean(total_loss)}')
+        print(f'[Training - Epoch {epoch}] loss: {np.mean(total_loss)}')
 
     return np.mean(total_cor)
 
@@ -133,7 +136,8 @@ def eval_one_epoch(model, data_loader, device, epoch, log_writer=None, config=No
     model.eval()
     total_loss = []
     total_cor = []
-    for data_iter_step, (data_dcit) in enumerate(data_loader):
+    bar = tqdm(enumerate(data_loader), total=len(data_loader), desc=f'Eval - Epoch {epoch}')
+    for data_iter_step, (data_dcit) in bar:
         samples = data_dcit['eeg'].to(device)
         img_features = None
         valid_idx = None
@@ -148,13 +152,14 @@ def eval_one_epoch(model, data_loader, device, epoch, log_writer=None, config=No
         cor = torch.mean(torch.tensor([torch.corrcoef(torch.cat([p[0].unsqueeze(0), s[0].unsqueeze(0)],axis=0))[0,1] for p, s in zip(pred, samples)]))
         total_loss.append(loss.item())
         total_cor.append(cor.item())
+        bar.set_postfix(loss=np.mean(total_loss), cor=np.mean(total_cor))
 
     if log_writer is not None:
-        log_writer.log(f'{type}_loss_epoch', np.mean(total_loss), step=epoch)
-        log_writer.log(f'{type}_cor_epoch', np.mean(total_cor), step=epoch)
+        log_writer.log(f'{type}_loss', np.mean(total_loss), step=epoch)
+        log_writer.log(f'{type}_cor', np.mean(total_cor), step=epoch)
         if start_time is not None:
             log_writer.log('time (min)', (time.time() - start_time)/60.0, step=epoch)
     if config.local_rank == 0:        
-        print(f'[Epoch {epoch}] loss: {np.mean(total_loss)}')
+        print(f'[Eval -Epoch {epoch}] loss: {np.mean(total_loss)}')
 
     return np.mean(total_cor)
