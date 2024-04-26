@@ -89,9 +89,9 @@ def clip_loss(similarity: torch.Tensor) -> torch.Tensor:
 #         # loss = clip_loss(similarity_matrix)
 #         loss = 1 - torch.cosine_similarity(target_emb, image_embeds, dim=-1).mean()
 #         return loss
-    
-# import sys
-# sys.path.append('/home/luigi/Documents/DrEEam/src/BENDR')
+import sys
+# sys.path.append('../../../BENDR')
+sys.path.append('./src/BENDR')
 from dn3_ext import ConvEncoderBENDR
 
 class cond_stage_model(nn.Module):
@@ -257,7 +257,7 @@ class eLDM:
             {
                 'model_state_dict': self.model.state_dict(),
                 'config': config,
-                'state': torch.random.get_rng_state()
+                'state': torch.cuda.get_rng_state()
 
             },
             os.path.join(output_path, 'checkpoint.pth')

@@ -76,7 +76,7 @@ def generate_images(generative_model, eeg_latents_dataset_train, eeg_latents_dat
     wandb.log({'summary/samples_train': wandb.Image(grid_imgs)})
 
     grid, samples = generative_model.generate(eeg_latents_dataset_test, config.num_samples, 
-                config.ddim_steps, config.HW)
+                config.ddim_steps, config.HW,10) #COMDOO PER FID
     grid_imgs = Image.fromarray(grid.astype(np.uint8))
     grid_imgs.save(os.path.join(config.output_path,f'./samples_test.png'))
     for sp_idx, imgs in enumerate(samples):
@@ -229,7 +229,7 @@ def create_trainer(num_epoch, precision=32, accumulate_grad_batches=2,logger=Non
     acc = 'gpu' if torch.cuda.is_available() else 'cpu'
     return pl.Trainer(accelerator=acc, max_epochs=num_epoch, logger=logger, 
             precision=precision, accumulate_grad_batches=accumulate_grad_batches,
-            enable_checkpointing=False, enable_model_summary=False, gradient_clip_val=0.5,
+            enable_checkpointing=True, enable_model_summary=False, gradient_clip_val=0.5,
             check_val_every_n_epoch=check_val_every_n_epoch)
   
 if __name__ == '__main__':

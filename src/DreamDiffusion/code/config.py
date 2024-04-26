@@ -113,7 +113,7 @@ class Config_Generative_Model:
         # finetune parameters
         self.batch_size = 5 #5 if self.dataset == 'GOD' else 25
         self.lr = 5.3e-5
-        self.num_epoch = 500
+        self.num_epoch = 300
         
         self.precision = 32
         self.accumulate_grad = 1
