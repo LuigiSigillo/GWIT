@@ -143,7 +143,8 @@ def main(config):
         eeg_latents_dataset_train, eeg_latents_dataset_test = create_EEG_dataset(eeg_signals_path = config.eeg_signals_path, 
                                                                                  splits_path = config.splits_path, 
                                                                                 image_transform=[img_transform_train, img_transform_test], 
-                                                                                 subject = config.subject
+                                                                                 subject = config.subject,
+                                                                                 encoder_name = config.encoder_name,
                                                                                  )
         # eeg_latents_dataset_train, eeg_latents_dataset_test = create_EEG_dataset_viz( image_transform=[img_transform_train, img_transform_test])
         num_voxels = eeg_latents_dataset_train.data_len
@@ -156,7 +157,7 @@ def main(config):
 
     if config.pretrain_mbm_path is not None:
         #commented the loading for BENDR 
-        pretrain_mbm_metafile = config.pretrain_mbm_path #torch.load(config.pretrain_mbm_path, map_location='cpu')
+        pretrain_mbm_metafile = torch.load(config.pretrain_mbm_path, map_location='cpu') if config.encoder_name is not "bendr" else config.pretrain_mbm_path
         # print('pretrain_mbm_path:', config.pretrain_mbm_path)
     else:
         pretrain_mbm_metafile = None
@@ -237,7 +238,7 @@ if __name__ == '__main__':
     args = args.parse_args()
     config = Config_Generative_Model()
     config = update_config(args, config)
-    config.pretrain_mbm_path = "/home/lopez/Documents/DrEEam/checkpoints/romulan-phaser-63_encoder_best_val.pt"
+    config.pretrain_mbm_path = "/home/lopez/Documents/DrEEam/src/DreamDiffusion/results/eeg_pretrain/30-04-2024-21-15-15/checkpoints/checkpoint.pth" #"/home/lopez/Documents/DrEEam/checkpoints/romulan-phaser-63_encoder_best_val.pt"
     #"/home/luigi/Documents/DrEEam/src/DreamDiffusion/pretrains/models/encoder_federica_checkpoint.pth"
     if config.checkpoint_path is not None:
         model_meta = torch.load(config.checkpoint_path, map_location='cpu')

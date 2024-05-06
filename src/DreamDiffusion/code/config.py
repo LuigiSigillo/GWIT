@@ -104,7 +104,8 @@ class Config_Generative_Model:
         self.mlp_ratio = 1.0
 
         self.pretrain_gm_path = os.path.join(self.root_path, 'pretrains')
-        
+        self.encoder_name = 'loro' 
+
         self.dataset = 'EEG' 
         self.pretrain_mbm_path = None
 

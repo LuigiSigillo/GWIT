@@ -63,7 +63,9 @@ if __name__ == '__main__':
     args = args.parse_args()
     root = args.root
     target = args.dataset
-    args.model_path = "/home/luigi/Documents/DrEEam/src/DreamDiffusion/exps/results/generation/18-04-2024-17-01-08/checkpoint.pth"
+    # args.model_path = "/home/luigi/Documents/DrEEam/src/DreamDiffusion/exps/results/generation/18-04-2024-17-01-08/checkpoint.pth" without state
+    args.model_path = "/home/luigi/Documents/DrEEam/src/DreamDiffusion/exps/results/generation/02-05-2024-17-17-07/checkpoint.pth"
+
     sd = torch.load(args.model_path, map_location='cpu')
     config = sd['config']
     # update paths
@@ -94,7 +96,7 @@ if __name__ == '__main__':
     splits_path = "/home/luigi/Documents/DrEEam/dataset/block_splits_by_image_single.pth"
     config.eeg_signals_path = "/home/luigi/Documents/DrEEam/dataset/eeg_5_95_std.pth"
     dataset_train, dataset_test = create_EEG_dataset(eeg_signals_path = config.eeg_signals_path, splits_path = splits_path, 
-                image_transform=[img_transform_train, img_transform_test], subject = 1)
+                image_transform=[img_transform_train, img_transform_test], subject = config.subject)
     num_voxels = dataset_test.dataset.data_len
 
     # num_voxels = dataset_test.num_voxels
@@ -118,14 +120,17 @@ if __name__ == '__main__':
     state = sd['state']  #[:816] #5056
     
     os.makedirs(output_path, exist_ok=True)
+    wandb.init( project="dreamdiffusion",
+                config=config,
+                reinit=True)
     grid, _ = generative_model.generate(dataset_train, config.num_samples, 
-                config.ddim_steps, config.HW, 10) # generate 10 instances
+                config.ddim_steps, config.HW, limit=10) # generate 10 instances
     grid_imgs = Image.fromarray(grid.astype(np.uint8))
     
     grid_imgs.save(os.path.join(output_path, f'./samples_train.png'))
 
     grid, samples = generative_model.generate(dataset_test, config.num_samples, 
-                config.ddim_steps, config.HW, limit=2, output_path = output_path, state=state) # generate 10 instances
+                config.ddim_steps, config.HW, limit=10, output_path = output_path, state=state) # generate 10 instances
     grid_imgs = Image.fromarray(grid.astype(np.uint8))
 
     grid_imgs.save(os.path.join(output_path, f'./samples_test.png'))
