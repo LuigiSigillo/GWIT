@@ -30,7 +30,7 @@ def clip_loss(similarity: torch.Tensor) -> torch.Tensor:
 #### COND STAGE MODEL Originale ####
 
 class cond_stage_model(nn.Module):
-    def __init__(self, metafile, num_voxels=440, cond_dim=1280, global_pool=True, clip_tune = True, cls_tune = False):
+    def __init__(self, metafile, num_voxels=440, cond_dim=1280, global_pool=True, clip_tune = True, cls_tune = False, encoder_name='loro'):
         super().__init__()
         # prepare pretrained fmri mae 
         if metafile is not None:
@@ -43,7 +43,7 @@ class cond_stage_model(nn.Module):
             model = eeg_encoder(time_len=num_voxels, global_pool=global_pool)
         self.mae = model
         if clip_tune:
-            self.mapping = mapping()
+            self.mapping = mapping(encoder_name=encoder_name)
         if cls_tune:
             self.cls_net = classify_network()
 
@@ -101,7 +101,7 @@ class cond_stage_model(nn.Module):
 # from dn3_ext import ConvEncoderBENDR
 
 # class cond_stage_model(nn.Module):
-#     def __init__(self, metafile, num_voxels=440, cond_dim=1280, global_pool=True, clip_tune = True, cls_tune = False):
+#     def __init__(self, metafile, num_voxels=440, cond_dim=1280, global_pool=True, clip_tune = True, cls_tune = False, encoder_name='bendr'):
 #         super().__init__()
 #         # prepare pretrained fmri mae 
 #         if metafile is not None:
@@ -124,7 +124,7 @@ class cond_stage_model(nn.Module):
 #         # self.fmri_seq_len = model.num_patches
 #         # self.fmri_latent_dim = model.embed_dim
 #         if clip_tune:
-#             self.mapping = mapping(self.fmri_seq_len,  self.fmri_latent_dim)
+#             self.mapping = mapping(self.fmri_seq_len,  self.fmri_latent_dim, encoder_name)
 #         if cls_tune:
 #             self.cls_net = classify_network()
 

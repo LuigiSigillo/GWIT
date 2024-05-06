@@ -440,13 +440,18 @@ class classify_network(nn.Module):
 
 
 class mapping(nn.Module):
-    def __init__(self, in_channels=128, fc_channels=512):
+    def __init__(self, in_channels=128, fc_channels=512, encoder_name='bendr'):
         super().__init__()
-        # self.maxpool = nn.Conv1d(in_channels, 1, 1, stride=1)
-        self.adaptive = nn.AdaptiveAvgPool1d((1))
-
-        # self.fc = nn.Linear(1024, 768)
-        self.fc = nn.Linear(fc_channels, 768)
+        self.encoder_name = encoder_name
+        if encoder_name == 'bendr':
+            self.adaptive = nn.AdaptiveAvgPool1d((1))
+        else:
+            self.adaptive = nn.Conv1d(in_channels, 1, 1, stride=1)
+        
+        if encoder_name == 'bendr':
+            self.fc = nn.Linear(fc_channels, 768)
+        else:
+            self.fc = nn.Linear(1024, 768)
 
 
     def forward(self, x):
