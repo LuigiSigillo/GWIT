@@ -304,7 +304,7 @@ class EEGDataset_s(Dataset):
 class EEGDataset(Dataset):
     
     # Constructor
-    def __init__(self, eeg_signals_path, image_transform=identity, subject = 4, encoder_name = 'bendr'):
+    def __init__(self, eeg_signals_path, image_transform=identity, subject = 4, encoder_name = 'bendr', imagenet_path = '/mnt/media/luigi/dataset/imageNet_images/'):
         # Load EEG signals
         loaded = torch.load(eeg_signals_path)
         # if opt.subject!=0:
@@ -317,7 +317,7 @@ class EEGDataset(Dataset):
             self.data = loaded['dataset']        
         self.labels = loaded["labels"]
         self.images = loaded["images"]
-        self.imagenet = '/mnt/media/luigi/dataset/imageNet_images/'
+        self.imagenet = imagenet_path
         self.image_transform = image_transform
         self.num_voxels = 440
         self.data_len = 512
@@ -422,11 +422,11 @@ class Splitter:
 def create_EEG_dataset(eeg_signals_path='/home/luigi/Documents/DrEEam/src/DreamDiffusion/datasets/eeg_5_95_std.pth', 
             splits_path = '/home/luigi/Documents/DrEEam/src/DreamDiffusion/datasets/block_splits_by_image_single.pth',
             # splits_path = '/home/luigi/Documents/DrEEam/src/DreamDiffusion/datasets/block_splits_by_image_all.pth',
-            image_transform=identity, subject = 0, encoder_name = 'bendr'):
+            image_transform=identity, subject = 0, encoder_name = 'bendr', imagenet_path = '/mnt/media/luigi/dataset/imageNet_images/):
     # if subject == 0:
         # splits_path = '/home/luigi/Documents/DrEEam/src/DreamDiffusion/datasets/block_splits_by_image_all.pth'
     if isinstance(image_transform, list):
-        dataset_train = EEGDataset(eeg_signals_path, image_transform[0], subject, encoder_name)
+        dataset_train = EEGDataset(eeg_signals_path, image_transform[0], subject, encoder_name, imagenet_path = imagenet_path)
         dataset_test = EEGDataset(eeg_signals_path, image_transform[1], subject, encoder_name)
     else:
         dataset_train = EEGDataset(eeg_signals_path, image_transform, subject)

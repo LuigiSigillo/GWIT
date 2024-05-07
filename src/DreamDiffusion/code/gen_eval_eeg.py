@@ -74,6 +74,8 @@ if __name__ == '__main__':
     config.pretrain_gm_path = 'src/DreamDiffusion/pretrains/'
     splits_path = "/leonardo_scratch/fast/IscrC_GenOpt/dataset/dreamdiff/block_splits_by_image_single.pth"
     config.eeg_signals_path = "/leonardo_scratch/fast/IscrC_GenOpt/dataset/dreamdiff/eeg_5_95_std.pth"
+    config.imagenet_path = "/leonardo_scratch/fast/IscrC_GenOpt/dataset/dreamdiff/imageNet_images"
+
     print(config.__dict__)
 
     output_path = os.path.join(config.root_path, 'results', 'eval',  
@@ -97,7 +99,7 @@ if __name__ == '__main__':
     
 
     dataset_train, dataset_test = create_EEG_dataset(eeg_signals_path = config.eeg_signals_path, splits_path = splits_path, 
-                image_transform=[img_transform_train, img_transform_test], subject = config.subject)
+                image_transform=[img_transform_train, img_transform_test], subject = config.subject, imagenet_path = config.imagenet_path)
     num_voxels = dataset_test.dataset.data_len
 
     # num_voxels = dataset_test.num_voxels

@@ -145,6 +145,7 @@ def main(config):
                                                                                 image_transform=[img_transform_train, img_transform_test], 
                                                                                  subject = config.subject,
                                                                                  encoder_name = config.encoder_name,
+                                                                                 imagenet_path = config.imagenet_path,
                                                                                  )
         # eeg_latents_dataset_train, eeg_latents_dataset_test = create_EEG_dataset_viz( image_transform=[img_transform_train, img_transform_test])
         num_voxels = eeg_latents_dataset_train.data_len
@@ -157,7 +158,7 @@ def main(config):
 
     if config.pretrain_mbm_path is not None:
         #commented the loading for BENDR 
-        pretrain_mbm_metafile = torch.load(config.pretrain_mbm_path, map_location='cpu') if config.encoder_name is not "bendr" else config.pretrain_mbm_path
+        pretrain_mbm_metafile = torch.load(config.pretrain_mbm_path, map_location='cpu') if config.encoder_name != "bendr" else config.pretrain_mbm_path
         # print('pretrain_mbm_path:', config.pretrain_mbm_path)
     else:
         pretrain_mbm_metafile = None
@@ -241,7 +242,7 @@ if __name__ == '__main__':
     config.pretrain_mbm_path = "src/DreamDiffusion/pretrains/models/encoder_loro_checkpoint.pth"
     config.eeg_signals_path = "/leonardo_scratch/fast/IscrC_GenOpt/dataset/dreamdiff/eeg_5_95_std.pth"
     config.splits_path = "/leonardo_scratch/fast/IscrC_GenOpt/dataset/dreamdiff/block_splits_by_image_single.pth" 
- 
+    config.imagenet_path = "/leonardo_scratch/fast/IscrC_GenOpt/dataset/dreamdiff/imageNet_images"
     #"/home/lopez/Documents/DrEEam/checkpoints/romulan-phaser-63_encoder_best_val.pt"
     if config.checkpoint_path is not None:
         model_meta = torch.load(config.checkpoint_path, map_location='cpu')
