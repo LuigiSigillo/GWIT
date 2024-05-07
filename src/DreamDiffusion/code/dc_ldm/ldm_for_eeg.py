@@ -30,7 +30,8 @@ def clip_loss(similarity: torch.Tensor) -> torch.Tensor:
 #### COND STAGE MODEL Originale ####
 
 class cond_stage_model(nn.Module):
-    def __init__(self, metafile, num_voxels=440, cond_dim=1280, global_pool=True, clip_tune = True, cls_tune = False, encoder_name='loro'):
+    def __init__(self, metafile, num_voxels=440, cond_dim=1280, global_pool=True, clip_tune = True,
+                 cls_tune = False, encoder_name='loro'):
         super().__init__()
         # prepare pretrained fmri mae 
         if metafile is not None:

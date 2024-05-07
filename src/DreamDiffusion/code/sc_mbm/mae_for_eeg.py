@@ -445,20 +445,19 @@ class mapping(nn.Module):
         self.encoder_name = encoder_name
         if encoder_name == 'bendr':
             self.adaptive = nn.AdaptiveAvgPool1d((1))
-        else:
-            self.adaptive = nn.Conv1d(in_channels, 1, 1, stride=1)
-        
-        if encoder_name == 'bendr':
             self.fc = nn.Linear(fc_channels, 768)
         else:
+            self.maxpool = nn.Conv1d(in_channels, 1, 1, stride=1)
             self.fc = nn.Linear(1024, 768)
 
 
     def forward(self, x):
-        # x = self.maxpool(x)
-        x = self.adaptive(x.transpose(1,2))
+        if self.encoder_name == 'bendr':
+            x = self.adaptive(x.transpose(1,2))
+        else:
+            x = self.maxpool(x)
         x = x.squeeze()
-        # x = self.fc(x)
+        x = self.fc(x)
         return x
 
 
