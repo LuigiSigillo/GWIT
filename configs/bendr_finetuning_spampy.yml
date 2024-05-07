@@ -3,11 +3,13 @@ augmentation_params:
   batch_crop_frac: 0.05
 
 training_params:
-  epochs: 5
+  epochs: 4
   validation_interval: None
   train_log_interval: 100
   batch_size: 64
   warmup_frac: 0.05
+  enc_checkpoint: 'checkpoints/pretty-durian-73_encoder_best_val.pt'
+  context_checkpoint: 'checkpoints/pretty-durian-73_contextualizer_best_val.pt'
 
 mask_threshold: 0.85
 mask_inflation: 1.
@@ -15,24 +17,24 @@ mask_pct_max: 0.6
 
 optimizer_params:
   lr: 0.00002
-  weight_decay: 0.01
+  weight_decay: 0.
   betas: [0.9, 0.98]
 
 bending_college_args:
   mask_rate: 0.065
-  # mask_span: 5
+  mask_span: 5
   layer_drop: 0.01
   multi_gpu: False
   temp: 0.1
   encoder_grad_frac: 0.1
   num_negatives: 20
   enc_feat_l2: 1.0
-  enc_downsample: [3, 2]
-  enc_width: [3, 2]
+  enc_downsample: [3,2,2,2]
+  enc_width: [3,2,2,2]
+  masking_type: 'test'
 
 dataset:
-  dataset_folder: '/mnt/media/lopez/moabb'
+  eeg_signals_path: '/home/luigi/Documents/DrEEam/dataset/eeg_5_95_std.pth'
+  splits_path: '/home/luigi/Documents/DrEEam/dataset/block_splits_by_image_all.pth'
+  only_eeg: True
   in_channels: 128
-  data_len: 1026 # minumum length of the dataset
-  load_preprocessed: True
-  redo_preprocessing: False

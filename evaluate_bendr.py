@@ -5,6 +5,7 @@ import torch
 import tqdm
 import argparse
 import numpy as np 
+import wandb
 import yaml
 from easydict import EasyDict as edict
 import torchvision.transforms as transforms
@@ -45,6 +46,55 @@ def parse_args():
     parser.add_argument('--no_evaluate', action='store_true', help="Only generate figures")
     return parser.parse_args()
 
+def plot_samples(inputs, bendr, reconstructed_bendr, mask, save_path='figures', num_samples=3, num_channels=3, dataset='MOABB', log=False):
+    print("Plotting samples")
+    masked_bendr = bendr.clone()
+    # print positions where mask is true
+    print(np.where(mask.cpu().numpy()))
+    masked_bendr.transpose(2, 1)[mask] = np.nan # for plotting purposes
+
+    # Select random samples from the batch
+    indices = np.random.choice(bendr.shape[0], size=num_samples, replace=False)
+
+    # Index into your data
+    input_samples = inputs[0][indices].cpu().numpy()
+    bendr_samples = bendr[indices].cpu().numpy()
+    masked_bendr_samples = masked_bendr[indices].cpu().numpy()
+    reconstructed_bendr_samples = reconstructed_bendr[indices][:, :, 1:].cpu().numpy()
+
+    # Select random channels
+    channels = np.random.choice(bendr.shape[1], size=num_channels, replace=False)
+    print("channels: ", channels)
+
+    for i, index in enumerate(indices):
+        fig, axs = plt.subplots(num_channels, 4, figsize=(30, 10))
+        fig.suptitle(f'Sample {index}')
+
+        for j, channel in enumerate(channels):
+            input_samples_channel = input_samples[i, 0].squeeze()
+            bendr_samples_channel = bendr_samples[i, channel].squeeze()
+            masked_bendr_samples_channel = masked_bendr_samples[i, channel].squeeze()
+            reconstructed_bendr_samples_channel = reconstructed_bendr_samples[i, channel].squeeze()
+
+            axs[j, 0].plot(input_samples_channel)
+            axs[j, 0].set_title('Original EEG')
+            axs[j, 0].set_ylabel(f'Channel {channel+1}', fontsize=14)
+
+            axs[j, 1].plot(bendr_samples_channel)
+            axs[j, 1].set_title('Bendr')
+
+            axs[j, 2].plot(masked_bendr_samples_channel)
+            axs[j, 2].set_title('Masked Bendr')
+
+            axs[j, 3].plot(reconstructed_bendr_samples_channel)
+            axs[j, 3].set_title('Reconstructed Bendr')
+
+        if log:
+            wandb.log({f"Sample {index}": wandb.Image(fig)})
+        else:
+            plt.savefig(f"{save_path}/{dataset}_sample_{index}.png")
+
+
 def evaluate(process: BendingCollegeWav2Vec, dataloader, save_path, plot=True, evaluate=True, dataset='MOABB'):
     process.train(False)
     data_iterator = iter(dataloader)
@@ -65,55 +115,7 @@ def evaluate(process: BendingCollegeWav2Vec, dataloader, save_path, plot=True, e
 
             ### Plot some samples ###
             if iteration == 0 and plot:
-                print("Plotting samples")
-                masked_bendr = bendr.clone()
-                # print positions where mask is true
-                print(np.where(mask.cpu().numpy()))
-                masked_bendr.transpose(2, 1)[mask] = np.nan # for plotting purposes
-
-                # Number of random samples to select
-                num_samples = 3
-
-                # Select random samples from the batch
-                indices = np.random.choice(bendr.shape[0], size=num_samples, replace=False)
-
-                # Index into your data
-                input_samples = inputs[0][indices].cpu().numpy()
-                bendr_samples = bendr[indices].cpu().numpy()
-                masked_bendr_samples = masked_bendr[indices].cpu().numpy()
-                reconstructed_bendr_samples = reconstructed_bendr[indices][:, :, 1:].cpu().numpy()
-
-                # Number of random channels to select
-                num_channels = 3
-
-                # Select random channels
-                channels = np.random.choice(bendr.shape[1], size=num_channels, replace=False)
-                print("channels: ", channels)
-
-                for i, index in enumerate(indices):
-                    fig, axs = plt.subplots(num_channels, 4, figsize=(30, 10))
-                    fig.suptitle(f'Sample {index}')
-
-                    for j, channel in enumerate(channels):
-                        input_samples_channel = input_samples[i, 0].squeeze()
-                        bendr_samples_channel = bendr_samples[i, channel].squeeze()
-                        masked_bendr_samples_channel = masked_bendr_samples[i, channel].squeeze()
-                        reconstructed_bendr_samples_channel = reconstructed_bendr_samples[i, channel].squeeze()
-
-                        axs[j, 0].plot(input_samples_channel)
-                        axs[j, 0].set_title('Original EEG')
-                        axs[j, 0].set_ylabel(f'Channel {channel+1}', fontsize=14)
-
-                        axs[j, 1].plot(bendr_samples_channel)
-                        axs[j, 1].set_title('Bendr')
-
-                        axs[j, 2].plot(masked_bendr_samples_channel)
-                        axs[j, 2].set_title('Masked Bendr')
-
-                        axs[j, 3].plot(reconstructed_bendr_samples_channel)
-                        axs[j, 3].set_title('Reconstructed Bendr')
-
-                    plt.savefig(f"{save_path}/{dataset}_sample_{index}.png")
+                plot_samples(inputs, bendr, reconstructed_bendr, mask, save_path, dataset=dataset)
 
                 # Only plot
                 if not evaluate:
@@ -161,7 +163,6 @@ if __name__ == '__main__':
             # batch = preprocess_EEG_data(batch, resample=False) # For original BENDR
             return [batch]
         test_loader = DataLoader(split_test, batch_size=16, shuffle=False, num_workers=6, collate_fn=collate_fn)
-        print("shape: ", next(iter(test_loader))[0].shape)
 
     encoder = ConvEncoderBENDR(in_features=config.dataset.in_channels, 
                                encoder_h=args.hidden_size, 

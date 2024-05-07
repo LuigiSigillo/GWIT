@@ -11,6 +11,9 @@ import pytorch_lightning as pl
 from pytorch_lightning.loggers import WandbLogger
 import copy
 
+import sys
+sys.path.append('./src/DreamDiffusion/code/')
+
 # own code
 from config import Config_Generative_Model
 from dataset import  create_EEG_dataset

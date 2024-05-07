@@ -15,11 +15,11 @@ class Config_MBM_EEG(Config_MAE_fMRI):
         self.lr = 2.5e-4
         self.min_lr = 0.
         self.weight_decay = 0.05
-        # self.num_epoch = 500
-        self.num_epoch = 1
+        self.num_epoch = 500
         self.warmup_epochs = 40
-        self.batch_size = 32
+        self.batch_size = 128
         self.clip_grad = 0.8
+        self.checkpoint = "src/DreamDiffusion/results/eeg_pretrain/26-04-2024-16-03-35/checkpoints/checkpoint.pth"
         
         # Model Parameters
         self.mask_ratio = 0.75

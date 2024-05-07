@@ -304,7 +304,7 @@ class EEGDataset_s(Dataset):
 class EEGDataset(Dataset):
     
     # Constructor
-    def __init__(self, eeg_signals_path, image_transform=identity, subject = 4):
+    def __init__(self, eeg_signals_path, image_transform=identity, subject=4, only_eeg=False):
         # Load EEG signals
         loaded = torch.load(eeg_signals_path)
         # if opt.subject!=0:
@@ -314,13 +314,14 @@ class EEGDataset(Dataset):
         if subject!=0:
             self.data = [loaded['dataset'][i] for i in range(len(loaded['dataset']) ) if loaded['dataset'][i]['subject']==subject]
         else:
-            self.data = loaded['dataset']        
+            self.data = loaded['dataset']       
         self.labels = loaded["labels"]
         self.images = loaded["images"]
         self.imagenet = '/mnt/media/luigi/dataset/imageNet_images/'
         self.image_transform = image_transform
         self.num_voxels = 440
         self.data_len = 512
+        self.only_eeg = only_eeg
         # Compute size
         self.size = len(self.data)
         self.processor = AutoProcessor.from_pretrained("openai/clip-vit-large-patch14")
@@ -344,6 +345,7 @@ class EEGDataset(Dataset):
         # eeg = self.data[i]["eeg"].float().t()
         eeg = self.data[i]["eeg"].float()
         eeg = eeg[:,20:460]
+        # print(eeg.shape)
         ##### 2023 2 13 add preprocess and transpose
         ### lopex noon la vuole piu
         # eeg = np.array(eeg.transpose(0,1))
@@ -356,6 +358,9 @@ class EEGDataset(Dataset):
         #normalize eeg
         eeg = (eeg - self.mean) / self.std
 
+        if self.only_eeg:
+            return {'eeg': eeg}
+        
         ##### 2023 2 13 add preprocess
         label = torch.tensor(self.data[i]["label"]).long()
 
@@ -370,7 +375,6 @@ class EEGDataset(Dataset):
         image = np.array(image_raw) / 255.0
         image_raw = self.processor(images=image_raw, return_tensors="pt")
         image_raw['pixel_values'] = image_raw['pixel_values'].squeeze(0)
-
 
         return {'eeg': eeg, 'label': label, 'image': self.image_transform(image), 'image_raw': image_raw}
         # Return
@@ -387,7 +391,6 @@ class Splitter:
 
         # Load split
         loaded = torch.load(split_path)
-
         self.split_idx = loaded["splits"][split_num][split_name]
         
         # Filter data
@@ -410,21 +413,22 @@ class Splitter:
 def create_EEG_dataset(eeg_signals_path='/home/luigi/Documents/DrEEam/src/DreamDiffusion/datasets/eeg_5_95_std.pth', 
             splits_path = '/home/luigi/Documents/DrEEam/src/DreamDiffusion/datasets/block_splits_by_image_single.pth',
             # splits_path = '/home/luigi/Documents/DrEEam/src/DreamDiffusion/datasets/block_splits_by_image_all.pth',
-            image_transform=identity, subject = 0):
+            image_transform=identity, subject = 0, only_eeg=False, **kwargs):
     # if subject == 0:
         # splits_path = '/home/luigi/Documents/DrEEam/src/DreamDiffusion/datasets/block_splits_by_image_all.pth'
     if isinstance(image_transform, list):
-        dataset_train = EEGDataset(eeg_signals_path, image_transform[0], subject )
-        dataset_test = EEGDataset(eeg_signals_path, image_transform[1], subject)
+        dataset_train = EEGDataset(eeg_signals_path, image_transform[0], subject, only_eeg=only_eeg)
+        dataset_test = EEGDataset(eeg_signals_path, image_transform[1], subject, only_eeg=only_eeg)
+        dataset_val = EEGDataset(eeg_signals_path, image_transform[1], subject, only_eeg=only_eeg)
     else:
-        dataset_train = EEGDataset(eeg_signals_path, image_transform, subject)
-        dataset_test = EEGDataset(eeg_signals_path, image_transform, subject)
+        dataset_train = EEGDataset(eeg_signals_path, image_transform, subject, only_eeg=only_eeg)
+        dataset_test = EEGDataset(eeg_signals_path, image_transform, subject, only_eeg=only_eeg)
+        dataset_val = EEGDataset(eeg_signals_path, image_transform, subject, only_eeg=only_eeg)
     split_train = Splitter(dataset_train, split_path = splits_path, split_num = 0, split_name = 'train', subject= subject)
     split_test = Splitter(dataset_test, split_path = splits_path, split_num = 0, split_name = 'test', subject = subject)
+    split_val = Splitter(dataset_val, split_path = splits_path, split_num = 0, split_name = 'val', subject = subject)
    
-
-
-    return (split_train, split_test)
+    return (split_train, split_test, split_val)
 
 
 
@@ -464,4 +468,8 @@ if __name__ == '__main__':
     import scipy.io as scio
     import copy
     import shutil
+    dataset_train, dataset_test = create_EEG_dataset(eeg_signals_path='/home/luigi/Documents/DrEEam/dataset/eeg_5_95_std.pth',
+                                                     splits_path='/home/luigi/Documents/DrEEam/dataset/block_splits_by_image_single.pth',
+                                                     subject=0,
+                                                     only_eeg=True)
 

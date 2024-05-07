@@ -1,6 +1,6 @@
 import random
-from pandas import DataFrame
 import torch
+import torch.utils
 from tqdm import tqdm
 import argparse
 import sys
@@ -8,12 +8,15 @@ import os
 import numpy as np 
 import wandb
 import yaml
+import torchvision.transforms as transforms
 from easydict import EasyDict as edict
 from eeg_prepr_dreamdif import MOABB
 # sys.path.append("/home/beingfedericax/moab3.9/dn3/dn3")
 
 from src.BENDR.dn3_ext import BendingCollegeWav2Vec, ConvEncoderBENDR, BENDRContextualizer
 from dn3.transforms.batch import RandomTemporalCrop
+
+from src.DreamDiffusion.code.dataset import create_EEG_dataset
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Pretrains a BENDER model.")
@@ -24,12 +27,13 @@ def parse_args():
     parser.add_argument('--num-workers', default=6, type=int)
     parser.add_argument('--no-save', action='store_true', help="Don't save checkpoints while training.")
     parser.add_argument('--no-save-epochs', action='store_true', help="Don't save epoch checkpoints while training")
-    parser.add_argument('--dataset_folder', default='/mnt/media/lopez/moabb', help='Path to the dataset')
+    parser.add_argument('--dataset', default='MOABB', help='Dataset to use')
     parser.add_argument('--seed', default=0, type=int, help='Seed for reproducibility')
+    parser.add_argument('--finetune', default=False, action='store_true', help='Whether to finetune')
     return parser.parse_args()
 
-def create_dataloaders(path, batch_size=64, collate_fn=None, **kwargs):
-    data = MOABB(root_dir=path, **kwargs)
+def create_dataloaders(batch_size=64, collate_fn=None, **kwargs):
+    data = MOABB(**kwargs)
     print("Num samples: ", len(data))
     train_size = int(0.7 * len(data))
     test_size = len(data) - train_size
@@ -64,8 +68,21 @@ if __name__ == '__main__':
     torch.backends.cudnn.benchmark = False
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(args.seed)
+    
+    batch_size = config.training_params.batch_size
 
-    train_loader, test_loader, val_loader = create_dataloaders(args.dataset_folder, **config.dataset)
+    if args.dataset == 'MOABB':
+        train_loader, test_loader, val_loader = create_dataloaders(batch_size=batch_size, **config.dataset)
+    elif args.dataset == 'Spampy':
+        dataset_train, dataset_test, dataset_val = create_EEG_dataset(**config.dataset)
+        def collate_fn(batch):
+            batch = list(filter(lambda x: x is not None, batch))
+            batch = torch.utils.data.dataloader.default_collate(batch)['eeg']
+            return [batch]
+        train_loader = torch.utils.data.DataLoader(dataset_train, batch_size=batch_size, num_workers=6, shuffle=True, collate_fn=collate_fn)
+        test_loader = torch.utils.data.DataLoader(dataset_test, batch_size=batch_size, num_workers=6, shuffle=False, collate_fn=collate_fn)
+        val_loader = torch.utils.data.DataLoader(dataset_val, batch_size=batch_size, num_workers=6, shuffle=False, collate_fn=collate_fn)
+
     print('Dataloaders created')
 
     print("Num training samples: ", len(train_loader.dataset))
@@ -78,11 +95,18 @@ if __name__ == '__main__':
                                enc_downsample=config.bending_college_args.enc_downsample, 
                                enc_width=config.bending_college_args.enc_width,)
     contextualizer = BENDRContextualizer(encoder.encoder_h, layer_drop=config.bending_college_args.layer_drop)
+    
+    if args.finetune:
+        print("Loading encoder and contextualizer checkpoints...")
+        encoder.load(config.training_params.enc_checkpoint, strict=False)
+        contextualizer.load(config.training_params.context_checkpoint, strict=False)
+    
+    # For original BENDR
     # encoder.load('/home/luigi/Documents/DrEEam/src/DreamDiffusion/pretrains/models/BENDR_encoder.pt', strict=False)
     # encoder.freeze_features()
     # contextualizer.load('src/BENDR/contextualizer.pt', strict=False)
     # contextualizer.freeze_features()
-    process = BendingCollegeWav2Vec(encoder, contextualizer, **config.bending_college_args)
+    process = BendingCollegeWav2Vec(encoder, contextualizer, batch_size=batch_size, **config.bending_college_args)
     process.set_optimizer(torch.optim.Adam(process.parameters(), **config.optimizer_params)) 
     process.add_batch_transform(RandomTemporalCrop(config.augmentation_params.batch_crop_frac))
 
@@ -113,8 +137,7 @@ if __name__ == '__main__':
                 **config.training_params)
     
     print('Training completed, now evaluating...')
-    # print(process.evaluate(test_loader))
-    test_metrics = process.efficient_evaluate(test_loader)
+    test_metrics = process.evaluate(test_loader)
     print(test_metrics)
     wandb.log({f'test_{k}' if k != 'epoch' else k: v for k, v in test_metrics.items()})
 

@@ -109,8 +109,22 @@ def train_one_epoch(model, data_loader, optimizer, device, epoch,
         #     print(torch.cat([p[0].unsqueeze(0), s[0].unsqueeze(0)],axis=0))
         #     print(torch.corrcoef(torch.cat([p[0].unsqueeze(0), s[0].unsqueeze(0)],axis=0)))
         #     print(torch.corrcoef(torch.cat([p[0].unsqueeze(0), s[0].unsqueeze(0)],axis=0))[0,1])
-            
-        cor = torch.mean(torch.tensor([torch.corrcoef(torch.cat([p[0].unsqueeze(0), s[0].unsqueeze(0)],axis=0))[0,1] for p, s in zip(pred, samples)])).item()
+        
+        cor_batch = []
+        nan_pairs = []
+
+        for p, s in zip(pred, samples):
+            print(s.shape)
+            cor = torch.corrcoef(torch.cat([p[0].unsqueeze(0), s[0].unsqueeze(0)],axis=0))[0,1]
+            cor_batch.append(cor)
+            if torch.isnan(cor):
+                print("cor is NaN. p[0]:", p[0], "s[0]:", s[0])
+                nan_pairs.append((p[0], s[0]))
+        cor_batch = torch.tensor(cor_batch)
+        # cor_batch = torch.tensor([torch.corrcoef(torch.cat([p[0].unsqueeze(0), s[0].unsqueeze(0)],axis=0))[0,1] for p, s in zip(pred, samples)])    
+        cor = torch.mean(cor_batch)
+        cor = cor.item()
+
         optimizer.zero_grad()
 
         total_loss.append(loss_value)
@@ -130,7 +144,7 @@ def train_one_epoch(model, data_loader, optimizer, device, epoch,
     if config.local_rank == 0:        
         print(f'[Training - Epoch {epoch}] loss: {np.mean(total_loss)}')
 
-    return np.mean(total_cor)
+    return np.mean(total_cor), total_cor
 
 def eval_one_epoch(model, data_loader, device, epoch, log_writer=None, config=None, start_time=None, model_without_ddp=None, type='eval'):
     model.eval()

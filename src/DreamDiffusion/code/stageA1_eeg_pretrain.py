@@ -64,6 +64,7 @@ def get_args_parser():
     parser.add_argument('--weight_decay', type=float)
     parser.add_argument('--num_epoch', type=int)
     parser.add_argument('--batch_size', type=int)
+    parser.add_argument('--checkpoint', default=None, type=str, help='Path to the checkpoint file')
 
     # Model Parameters
     parser.add_argument('--mask_ratio', type=float)
@@ -133,9 +134,9 @@ def main(config):
         batch = torch.utils.data.dataloader.default_collate(batch)[0]
         return {'eeg': batch}
 
-    train_loader, test_loader, val_loader = create_dataloaders('/mnt/media/lopez/moabb', 
-                                                               batch_size=config.batch_size,
+    train_loader, test_loader, val_loader = create_dataloaders(batch_size=config.batch_size,
                                                                collate_fn=collate_fn,
+                                                               root_dir='/mnt/media/lopez/moabb',
                                                                data_len=1024, # 1024 instead of 1026 s.t. it is divisible by pathc_size=4
                                                                load_preprocessed=True,)
     print('Dataloaders created')
@@ -190,18 +191,35 @@ def main(config):
         img_feature_extractor = create_feature_extractor(m, return_nodes={f'layer2': 'layer2'}).to(device).eval()
         for param in img_feature_extractor.parameters():
             param.requires_grad = False
+    
+    # Load the checkpoint if specified
+    if config.checkpoint is not None:
+        print(f'Loading checkpoint from {config.checkpoint}')
+        checkpoint = torch.load(config.checkpoint)
+        model.load_state_dict(checkpoint['model'])
+        optimizer.load_state_dict(checkpoint['optimizer'])
+        loss_scaler.load_state_dict(checkpoint['scaler'])
+        start_epoch = checkpoint['epoch'] + 1
+    else:
+        start_epoch = 0
 
-    for ep in range(config.num_epoch):
+    print(f'Starting from epoch {start_epoch}')
+    # Continue training from the last epoch
+    for ep in range(start_epoch, config.num_epoch):
         
         if torch.cuda.device_count() > 1: 
             sampler.set_epoch(ep) # to shuffle the data at every epoch
-        cor = train_one_epoch(model, dataloader_eeg, optimizer, device, ep, loss_scaler, logger, config, start_time, model_without_ddp,
+        cor, cor_batches = train_one_epoch(model, dataloader_eeg, optimizer, device, ep, loss_scaler, logger, config, start_time, model_without_ddp,
                             img_feature_extractor, preprocess)
         cor_list.append(cor)
+        print(f'Epoch {ep} - Correlation: {cor}')
+
+        # Print the number of nan values in cor_batches
+        print(f'Number of nan values in cor_batches: {np.isnan(cor_batches).sum()}')
 
         # Add evaluation
-        val_cor = eval_one_epoch(model, val_loader, device, ep, logger, config, start_time, model_without_ddp)
-        val_cor_list.append(val_cor)
+        # val_cor = eval_one_epoch(model, val_loader, device, ep, logger, config, start_time, model_without_ddp)
+        # val_cor_list.append(val_cor)
         
         # if (ep % 20 == 0 or ep + 1 == config.num_epoch) and config.local_rank == 0: #and ep != 0
             # save models
@@ -209,7 +227,7 @@ def main(config):
         save_model(config, ep, model_without_ddp, optimizer, loss_scaler, os.path.join(output_path,'checkpoints'))
         # plot figures
         plot_recon_figures(model, device, dataset_pretrain, output_path, 5, config, logger, model_without_ddp, type='train')
-        plot_recon_figures(model, device, val_loader.dataset, output_path, 5, config, logger, model_without_ddp, type='val')
+        # plot_recon_figures(model, device, val_loader.dataset, output_path, 5, config, logger, model_without_ddp, type='val')
             
     total_time = time.time() - start_time
     total_time_str = str(datetime.timedelta(seconds=int(total_time)))
@@ -219,7 +237,7 @@ def main(config):
     plot_recon_figures(model, device, test_loader.dataset, output_path, 5, config, logger, model_without_ddp, type='test')
     if logger is not None:
         logger.log('max cor', np.max(cor_list), step=config.num_epoch-1)
-        logger.log('max val cor', np.max(val_cor_list), step=config.num_epoch-1)
+        # logger.log('max val cor', np.max(val_cor_list), step=config.num_epoch-1)
         logger.log('test cor', test_cor, step=config.num_epoch-1)
         logger.finish()
     return
