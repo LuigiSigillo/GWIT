@@ -253,6 +253,9 @@ class eLDM:
         # self.model.freeze_whole_model()
         # self.model.unfreeze_cond_stage()
 
+        print("Train samples: ", len(dataset))
+        print("Test samples: ", len(test_dataset))
+
         self.model.learning_rate = lr1
         self.model.train_cond_stage_only = True
         self.model.eval_avg = config.eval_avg

@@ -145,7 +145,7 @@ def main(config):
 
         eeg_latents_dataset_train, eeg_latents_dataset_test = create_EEG_dataset(eeg_signals_path = config.eeg_signals_path, 
                                                                                  splits_path = config.splits_path, 
-                                                                                image_transform=[img_transform_train, img_transform_test], 
+                                                                                 image_transform=[img_transform_train, img_transform_test], 
                                                                                  subject = config.subject,
                                                                                  encoder_name = config.encoder_name,
                                                                                  imagenet_path = config.imagenet_path,
@@ -196,6 +196,7 @@ def get_args_parser():
     parser.add_argument('--checkpoint_path', type=str)
     parser.add_argument('--crop_ratio', type=float)
     parser.add_argument('--dataset', type=str)
+    parser.add_argument('--all_subjects', type=bool, action='store_true')
 
     # finetune parameters
     parser.add_argument('--batch_size', type=int)
@@ -244,7 +245,15 @@ if __name__ == '__main__':
     config = update_config(args, config)
     config.pretrain_mbm_path = "src/DreamDiffusion/pretrains/models/encoder_loro_checkpoint.pth"
     config.eeg_signals_path = "/leonardo_scratch/fast/IscrC_GenOpt/dataset/dreamdiff/eeg_5_95_std.pth"
-    config.splits_path = "/leonardo_scratch/fast/IscrC_GenOpt/dataset/dreamdiff/block_splits_by_image_single.pth" 
+
+    if args.all_subjects:
+        print('Using all subjects')
+        config.splits_path = "/leonardo_scratch/fast/IscrC_GenOpt/dataset/dreamdiff/block_splits_by_image_all.pth"
+        config.subject = 0
+    else:
+        print('Using single subject: ', config.subject)
+        config.splits_path = "/leonardo_scratch/fast/IscrC_GenOpt/dataset/dreamdiff/block_splits_by_image_single.pth" 
+
     config.imagenet_path = "/leonardo_scratch/fast/IscrC_GenOpt/dataset/dreamdiff/imageNet_images"
     #"/home/lopez/Documents/DrEEam/checkpoints/romulan-phaser-63_encoder_best_val.pt"
     if config.checkpoint_path is not None:
