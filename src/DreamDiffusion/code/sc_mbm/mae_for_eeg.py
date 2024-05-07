@@ -1,5 +1,5 @@
 import sys
-sys.path.append('/home/luigi/Documents/DrEEam/src/DreamDiffusion/code/') # forse va tolto luigi??
+sys.path.append('src/DreamDiffusion/code/') # forse va tolto luigi??
 # print(sys.path)
 import sc_mbm.utils as ut
 import torch
@@ -440,20 +440,24 @@ class classify_network(nn.Module):
 
 
 class mapping(nn.Module):
-    def __init__(self, in_channels=128, fc_channels=512):
+    def __init__(self, in_channels=128, fc_channels=512, encoder_name='bendr'):
         super().__init__()
-        # self.maxpool = nn.Conv1d(in_channels, 1, 1, stride=1)
-        self.adaptive = nn.AdaptiveAvgPool1d((1))
-
-        # self.fc = nn.Linear(1024, 768)
-        self.fc = nn.Linear(fc_channels, 768)
+        self.encoder_name = encoder_name
+        if encoder_name == 'bendr':
+            self.adaptive = nn.AdaptiveAvgPool1d((1))
+            self.fc = nn.Linear(fc_channels, 768)
+        else:
+            self.maxpool = nn.Conv1d(in_channels, 1, 1, stride=1)
+            self.fc = nn.Linear(1024, 768)
 
 
     def forward(self, x):
-        # x = self.maxpool(x)
-        x = self.adaptive(x.transpose(1,2))
+        if self.encoder_name == 'bendr':
+            x = self.adaptive(x.transpose(1,2))
+        else:
+            x = self.maxpool(x)
         x = x.squeeze()
-        # x = self.fc(x)
+        x = self.fc(x)
         return x
 
 

@@ -79,7 +79,7 @@ def generate_images(generative_model, eeg_latents_dataset_train, eeg_latents_dat
     wandb.log({'summary/samples_train': wandb.Image(grid_imgs)})
 
     grid, samples = generative_model.generate(eeg_latents_dataset_test, config.num_samples, 
-                config.ddim_steps, config.HW)
+                config.ddim_steps, config.HW,10) #COMDOO PER FID
     grid_imgs = Image.fromarray(grid.astype(np.uint8))
     grid_imgs.save(os.path.join(config.output_path,f'./samples_test.png'))
     for sp_idx, imgs in enumerate(samples):
@@ -146,7 +146,9 @@ def main(config):
         eeg_latents_dataset_train, eeg_latents_dataset_test = create_EEG_dataset(eeg_signals_path = config.eeg_signals_path, 
                                                                                  splits_path = config.splits_path, 
                                                                                 image_transform=[img_transform_train, img_transform_test], 
-                                                                                 subject = config.subject
+                                                                                 subject = config.subject,
+                                                                                 encoder_name = config.encoder_name,
+                                                                                 imagenet_path = config.imagenet_path,
                                                                                  )
         # eeg_latents_dataset_train, eeg_latents_dataset_test = create_EEG_dataset_viz( image_transform=[img_transform_train, img_transform_test])
         num_voxels = eeg_latents_dataset_train.data_len
@@ -159,7 +161,7 @@ def main(config):
 
     if config.pretrain_mbm_path is not None:
         #commented the loading for BENDR 
-        pretrain_mbm_metafile = config.pretrain_mbm_path #torch.load(config.pretrain_mbm_path, map_location='cpu')
+        pretrain_mbm_metafile = torch.load(config.pretrain_mbm_path, map_location='cpu') if config.encoder_name != "bendr" else config.pretrain_mbm_path
         # print('pretrain_mbm_path:', config.pretrain_mbm_path)
     else:
         pretrain_mbm_metafile = None
@@ -189,7 +191,7 @@ def get_args_parser():
     parser = argparse.ArgumentParser('Double Conditioning LDM Finetuning', add_help=False)
     # project parameters
     parser.add_argument('--seed', type=int)
-    parser.add_argument('--root_path', type=str, default = '/home/luigi/Documents/DrEEam/src/DreamDiffusion/')
+    parser.add_argument('--root_path', type=str, default = 'src/DreamDiffusion/')
     parser.add_argument('--pretrain_mbm_path', type=str)
     parser.add_argument('--checkpoint_path', type=str)
     parser.add_argument('--crop_ratio', type=float)
@@ -232,7 +234,7 @@ def create_trainer(num_epoch, precision=32, accumulate_grad_batches=2,logger=Non
     acc = 'gpu' if torch.cuda.is_available() else 'cpu'
     return pl.Trainer(accelerator=acc, max_epochs=num_epoch, logger=logger, 
             precision=precision, accumulate_grad_batches=accumulate_grad_batches,
-            enable_checkpointing=False, enable_model_summary=False, gradient_clip_val=0.5,
+            enable_checkpointing=True, enable_model_summary=False, gradient_clip_val=0.5,
             check_val_every_n_epoch=check_val_every_n_epoch)
   
 if __name__ == '__main__':
@@ -240,8 +242,11 @@ if __name__ == '__main__':
     args = args.parse_args()
     config = Config_Generative_Model()
     config = update_config(args, config)
-    config.pretrain_mbm_path = "/home/lopez/Documents/DrEEam/checkpoints/romulan-phaser-63_encoder_best_val.pt"
-    #"/home/luigi/Documents/DrEEam/src/DreamDiffusion/pretrains/models/encoder_federica_checkpoint.pth"
+    config.pretrain_mbm_path = "src/DreamDiffusion/pretrains/models/encoder_loro_checkpoint.pth"
+    config.eeg_signals_path = "/leonardo_scratch/fast/IscrC_GenOpt/dataset/dreamdiff/eeg_5_95_std.pth"
+    config.splits_path = "/leonardo_scratch/fast/IscrC_GenOpt/dataset/dreamdiff/block_splits_by_image_single.pth" 
+    config.imagenet_path = "/leonardo_scratch/fast/IscrC_GenOpt/dataset/dreamdiff/imageNet_images"
+    #"/home/lopez/Documents/DrEEam/checkpoints/romulan-phaser-63_encoder_best_val.pt"
     if config.checkpoint_path is not None:
         model_meta = torch.load(config.checkpoint_path, map_location='cpu')
         ckp = config.checkpoint_path

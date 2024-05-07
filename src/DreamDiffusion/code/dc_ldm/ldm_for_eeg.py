@@ -26,105 +26,30 @@ def clip_loss(similarity: torch.Tensor) -> torch.Tensor:
     image_loss = contrastive_loss(similarity, dim=1)
     return (caption_loss + image_loss) / 2.0
 
-# class cond_stage_model(nn.Module):
-#     def __init__(self, metafile, num_voxels=440, cond_dim=1280, global_pool=True, clip_tune = True, cls_tune = False):
-#         super().__init__()
-#         # prepare pretrained fmri mae 
-#         if metafile is not None:
-#             print("Loading encoder from checkpoint")
-#             model = create_model_from_config(metafile['config'], num_voxels, global_pool)
-#             #commentato
-#             model.load_checkpoint(metafile['model'])
-#         else:
-#             print("Initializing encoder from scratch")
-#             model = eeg_encoder(time_len=num_voxels, global_pool=global_pool)
-#         self.mae = model
-#         if clip_tune:
-#             self.mapping = mapping()
-#         if cls_tune:
-#             self.cls_net = classify_network()
 
-#         self.fmri_seq_len = model.num_patches
-#         self.fmri_latent_dim = model.embed_dim
-#         if global_pool == False:
-#             self.channel_mapper = nn.Sequential(
-#                 nn.Conv1d(self.fmri_seq_len, self.fmri_seq_len // 2, 1, bias=True),
-#                 nn.Conv1d(self.fmri_seq_len // 2, 77, 1, bias=True)
-#             )
-#         self.dim_mapper = nn.Linear(self.fmri_latent_dim, cond_dim, bias=True)
-#         self.global_pool = global_pool
-
-#         # self.image_embedder = FrozenImageEmbedder()
-
-#     # def forward(self, x):
-#     #     # n, c, w = x.shape
-#     #     latent_crossattn = self.mae(x)
-#     #     if self.global_pool == False:
-#     #         latent_crossattn = self.channel_mapper(latent_crossattn)
-#     #     latent_crossattn = self.dim_mapper(latent_crossattn)
-#     #     out = latent_crossattn
-#     #     return out
-
-#     def forward(self, x):
-#         # n, c, w = x.shape
-#         latent_crossattn = self.mae(x)
-#         latent_return = latent_crossattn
-#         if self.global_pool == False:
-#             latent_crossattn = self.channel_mapper(latent_crossattn)
-#         latent_crossattn = self.dim_mapper(latent_crossattn)
-#         out = latent_crossattn
-#         return out, latent_return
-
-#     # def recon(self, x):
-#     #     recon = self.decoder(x)
-#     #     return recon
-
-#     def get_cls(self, x):
-#         return self.cls_net(x)
-
-#     def get_clip_loss(self, x, image_embeds):
-#         # image_embeds = self.image_embedder(image_inputs)
-#         target_emb = self.mapping(x)
-#         # similarity_matrix = nn.functional.cosine_similarity(target_emb.unsqueeze(1), image_embeds.unsqueeze(0), dim=2)
-#         # loss = clip_loss(similarity_matrix)
-#         loss = 1 - torch.cosine_similarity(target_emb, image_embeds, dim=-1).mean()
-#         return loss
-    
-import sys
-sys.path.append('./src/BENDR')
-from dn3_ext import ConvEncoderBENDR
+#### COND STAGE MODEL Originale ####
 
 class cond_stage_model(nn.Module):
-    def __init__(self, metafile, num_voxels=440, cond_dim=1280, global_pool=True, clip_tune = True, cls_tune = False):
+    def __init__(self, metafile, num_voxels=440, cond_dim=1280, global_pool=True, clip_tune = True,
+                 cls_tune = False, encoder_name='loro'):
         super().__init__()
         # prepare pretrained fmri mae 
         if metafile is not None:
             print("Loading encoder from checkpoint")
-
-            model  = ConvEncoderBENDR(in_features=128, 
-                               encoder_h=512, 
-                               enc_downsample=[3, 2] , 
-                               enc_width=[3, 2] )
-            model.load(metafile, strict=True)
-            # model.freeze_features()
-            model = model.to('cuda')
+            model = create_model_from_config(metafile['config'], num_voxels, global_pool)
+            #commentato
+            model.load_checkpoint(metafile['model'])
         else:
             print("Initializing encoder from scratch")
-            model = ConvEncoderBENDR(in_features=20, encoder_h=512)
+            model = eeg_encoder(time_len=num_voxels, global_pool=global_pool)
         self.mae = model
-        self.fmri_latent_dim = 512 #model.encoder_h
-        self.fmri_seq_len = 74# 86
-    
-        # self.fmri_seq_len = model.num_patches
-        # self.fmri_latent_dim = model.embed_dim
         if clip_tune:
-            self.mapping = mapping(self.fmri_seq_len,  self.fmri_latent_dim)
+            self.mapping = mapping(encoder_name=encoder_name)
         if cls_tune:
             self.cls_net = classify_network()
 
-
-
-
+        self.fmri_seq_len = model.num_patches
+        self.fmri_latent_dim = model.embed_dim
         if global_pool == False:
             self.channel_mapper = nn.Sequential(
                 nn.Conv1d(self.fmri_seq_len, self.fmri_seq_len // 2, 1, bias=True),
@@ -147,15 +72,10 @@ class cond_stage_model(nn.Module):
     def forward(self, x):
         # n, c, w = x.shape
         latent_crossattn = self.mae(x)
-        #bender has shape inverted
-        latent_crossattn = latent_crossattn.permute(0, 2, 1)
-        # print("latent_crossattn: ", latent_crossattn.shape) # torch.Size([5, 128, 1024])
         latent_return = latent_crossattn
         if self.global_pool == False:
             latent_crossattn = self.channel_mapper(latent_crossattn)
-            # print("latent_crossattn after channel mapper: ", latent_crossattn.shape) # torch.Size([5, 77, 1024])
         latent_crossattn = self.dim_mapper(latent_crossattn)
-        # print("latent_crossattn after dim mapper: ", latent_crossattn.shape) # torch.Size([5, 77, 768])
         out = latent_crossattn
         return out, latent_return
 
@@ -167,15 +87,102 @@ class cond_stage_model(nn.Module):
         return self.cls_net(x)
 
     def get_clip_loss(self, x, image_embeds):
-        #image embeds shape (#,768)
-        #x shape (#,74, 512)
-        # image_embeds = self.image_embedder(image_inputs) 
-        #x.shape (#,77,768)
+        # image_embeds = self.image_embedder(image_inputs)
         target_emb = self.mapping(x)
         # similarity_matrix = nn.functional.cosine_similarity(target_emb.unsqueeze(1), image_embeds.unsqueeze(0), dim=2)
         # loss = clip_loss(similarity_matrix)
         loss = 1 - torch.cosine_similarity(target_emb, image_embeds, dim=-1).mean()
         return loss
+
+
+#### COND STAGE MODEL CON BENDR ####
+# import sys
+# # sys.path.append('../../../BENDR')
+# sys.path.append('./src/BENDR')
+# from dn3_ext import ConvEncoderBENDR
+
+# class cond_stage_model(nn.Module):
+#     def __init__(self, metafile, num_voxels=440, cond_dim=1280, global_pool=True, clip_tune = True, cls_tune = False, encoder_name='bendr'):
+#         super().__init__()
+#         # prepare pretrained fmri mae 
+#         if metafile is not None:
+#             print("Loading encoder from checkpoint")
+
+#             model  = ConvEncoderBENDR(in_features=128, 
+#                                encoder_h=512, 
+#                                enc_downsample=[3, 2] , 
+#                                enc_width=[3, 2] )
+#             model.load(metafile, strict=True)
+#             # model.freeze_features()
+#             model = model.to('cuda')
+#         else:
+#             print("Initializing encoder from scratch")
+#             model = ConvEncoderBENDR(in_features=20, encoder_h=512)
+#         self.mae = model
+#         self.fmri_latent_dim = 512 #model.encoder_h
+#         self.fmri_seq_len = 74# 86
+    
+#         # self.fmri_seq_len = model.num_patches
+#         # self.fmri_latent_dim = model.embed_dim
+#         if clip_tune:
+#             self.mapping = mapping(self.fmri_seq_len,  self.fmri_latent_dim, encoder_name)
+#         if cls_tune:
+#             self.cls_net = classify_network()
+
+
+
+
+#         if global_pool == False:
+#             self.channel_mapper = nn.Sequential(
+#                 nn.Conv1d(self.fmri_seq_len, self.fmri_seq_len // 2, 1, bias=True),
+#                 nn.Conv1d(self.fmri_seq_len // 2, 77, 1, bias=True)
+#             )
+#         self.dim_mapper = nn.Linear(self.fmri_latent_dim, cond_dim, bias=True)
+#         self.global_pool = global_pool
+
+#         # self.image_embedder = FrozenImageEmbedder()
+
+#     # def forward(self, x):
+#     #     # n, c, w = x.shape
+#     #     latent_crossattn = self.mae(x)
+#     #     if self.global_pool == False:
+#     #         latent_crossattn = self.channel_mapper(latent_crossattn)
+#     #     latent_crossattn = self.dim_mapper(latent_crossattn)
+#     #     out = latent_crossattn
+#     #     return out
+
+#     def forward(self, x):
+#         # n, c, w = x.shape
+#         latent_crossattn = self.mae(x)
+#         #bender has shape inverted
+#         latent_crossattn = latent_crossattn.permute(0, 2, 1)
+#         # print("latent_crossattn: ", latent_crossattn.shape) # torch.Size([5, 128, 1024])
+#         latent_return = latent_crossattn
+#         if self.global_pool == False:
+#             latent_crossattn = self.channel_mapper(latent_crossattn)
+#             # print("latent_crossattn after channel mapper: ", latent_crossattn.shape) # torch.Size([5, 77, 1024])
+#         latent_crossattn = self.dim_mapper(latent_crossattn)
+#         # print("latent_crossattn after dim mapper: ", latent_crossattn.shape) # torch.Size([5, 77, 768])
+#         out = latent_crossattn
+#         return out, latent_return
+
+#     # def recon(self, x):
+#     #     recon = self.decoder(x)
+#     #     return recon
+
+#     def get_cls(self, x):
+#         return self.cls_net(x)
+
+#     def get_clip_loss(self, x, image_embeds):
+#         #image embeds shape (#,768)
+#         #x shape (#,74, 512)
+#         # image_embeds = self.image_embedder(image_inputs) 
+#         #x.shape (#,77,768)
+#         target_emb = self.mapping(x)
+#         # similarity_matrix = nn.functional.cosine_similarity(target_emb.unsqueeze(1), image_embeds.unsqueeze(0), dim=2)
+#         # loss = clip_loss(similarity_matrix)
+#         loss = 1 - torch.cosine_similarity(target_emb, image_embeds, dim=-1).mean()
+#         return loss
     
 
 
@@ -186,8 +193,8 @@ class eLDM:
                  logger=None, ddim_steps=250, global_pool=True, use_time_cond=False, clip_tune = True, cls_tune = False):
         # self.ckp_path = os.path.join(pretrain_root, 'model.ckpt')
         # self.ckp_path = os.path.join(pretrain_root, 'models/v1-5-pruned.ckpt')
-        self.ckp_path = '/home/luigi/Documents/DrEEam/src/DreamDiffusion/pretrains/models/v1-5-pruned.ckpt'
-        self.config_path = '/home/luigi/Documents/DrEEam/src/DreamDiffusion/pretrains/models/config15.yaml' #os.path.join(pretrain_root, 'models/config15.yaml') 
+        self.ckp_path = 'src/DreamDiffusion/pretrains/models/v1-5-pruned.ckpt'
+        self.config_path = 'src/DreamDiffusion/pretrains/models/config15.yaml' #os.path.join(pretrain_root, 'models/config15.yaml') 
         config = OmegaConf.load(self.config_path)
         config.model.params.unet_config.params.use_time_cond = use_time_cond
         config.model.params.unet_config.params.global_pool = global_pool
@@ -257,7 +264,7 @@ class eLDM:
             {
                 'model_state_dict': self.model.state_dict(),
                 'config': config,
-                'state': torch.random.get_rng_state()
+                'state': torch.cuda.get_rng_state()
 
             },
             os.path.join(output_path, 'checkpoint.pth')
@@ -290,7 +297,6 @@ class eLDM:
                         break
                 # print(item)
                 latent = item['eeg']
-
                 # Prova passando tensore random invece di eeg
                 # print("eeg: ", latent)
                 # latent = torch.randn(latent.shape).to(self.device)
@@ -301,13 +307,20 @@ class eLDM:
                 # assert latent.shape[-1] == self.fmri_latent_dim, 'dim error'
                 
                 c, re_latent = model.get_learned_conditioning(repeat(latent, 'h w -> c h w', c=num_samples).to(self.device))
+                #added to see clip loss
+                item['image_raw']['pixel_values'] = item['image_raw']['pixel_values'].unsqueeze(0)
+                image_embeds = model.image_embedder(item['image_raw'].to(self.device))
+                loss_clip = model.cond_stage_model.get_clip_loss(c, image_embeds)
+                wandb.log({"clip_loss": loss_clip})
+                
                 # c = model.get_learned_conditioning(repeat(latent, 'h w -> c h w', c=num_samples).to(self.device))
                 samples_ddim, _ = sampler.sample(S=ddim_steps, 
                                                 conditioning=c,
                                                 batch_size=num_samples,
                                                 shape=shape,
                                                 verbose=False,
-                                                unconditional_guidance_scale=10)
+                                                unconditional_guidance_scale=1
+                                                )
 
                 x_samples_ddim = model.decode_first_stage(samples_ddim)
                 x_samples_ddim = torch.clamp((x_samples_ddim+1.0)/2.0, min=0.0, max=1.0)
