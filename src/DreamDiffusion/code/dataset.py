@@ -304,7 +304,7 @@ class EEGDataset_s(Dataset):
 class EEGDataset(Dataset):
     
     # Constructor
-    def __init__(self, eeg_signals_path, image_transform=identity, subject = 4):
+    def __init__(self, eeg_signals_path, image_transform=identity, subject = 4, encoder_name = 'bendr'):
         # Load EEG signals
         loaded = torch.load(eeg_signals_path)
         # if opt.subject!=0:
@@ -333,6 +333,7 @@ class EEGDataset(Dataset):
         self.mean = torch.mean(torch.stack(self.data_l))
         self.std = torch.std(torch.stack(self.data_l))
         del self.data_l
+        self.encoder_name = encoder_name
     # Get size
     def __len__(self):
         return self.size
@@ -342,20 +343,31 @@ class EEGDataset(Dataset):
         # Process EEG
         # print(self.data[i])
         # eeg = self.data[i]["eeg"].float().t()
-        eeg = self.data[i]["eeg"].float()
-        eeg = eeg[:,20:460]
-        ##### 2023 2 13 add preprocess and transpose
-        ### lopex noon la vuole piu
-        # eeg = np.array(eeg.transpose(0,1))
-        # x = np.linspace(0, 1, eeg.shape[-1])
-        # x2 = np.linspace(0, 1, self.data_len)
-        # f = interp1d(x, eeg)
-        # eeg = f(x2)
-        # eeg = torch.from_numpy(eeg).float()
-        
-        #normalize eeg
-        eeg = (eeg - self.mean) / self.std
+        if self.encoder_name == 'bendr':
+            eeg = self.data[i]["eeg"].float()
+            eeg = eeg[:,20:460]
+            ##### 2023 2 13 add preprocess and transpose
+            ### lopex noon la vuole piu
+            # eeg = np.array(eeg.transpose(0,1))
+            # x = np.linspace(0, 1, eeg.shape[-1])
+            # x2 = np.linspace(0, 1, self.data_len)
+            # f = interp1d(x, eeg)
+            # eeg = f(x2)
+            # eeg = torch.from_numpy(eeg).float()
+            
+            #normalize eeg
+            eeg = (eeg - self.mean) / self.std
+        else:
+            eeg = self.data[i]["eeg"].float().t()
 
+            eeg = eeg[20:460,:]
+            ##### 2023 2 13 add preprocess and transpose
+            eeg = np.array(eeg.transpose(0,1))
+            x = np.linspace(0, 1, eeg.shape[-1])
+            x2 = np.linspace(0, 1, self.data_len)
+            f = interp1d(x, eeg)
+            eeg = f(x2)
+            eeg = torch.from_numpy(eeg).float()
         ##### 2023 2 13 add preprocess
         label = torch.tensor(self.data[i]["label"]).long()
 
@@ -370,7 +382,7 @@ class EEGDataset(Dataset):
         image = np.array(image_raw) / 255.0
         image_raw = self.processor(images=image_raw, return_tensors="pt")
         image_raw['pixel_values'] = image_raw['pixel_values'].squeeze(0)
-
+        
 
         return {'eeg': eeg, 'label': label, 'image': self.image_transform(image), 'image_raw': image_raw}
         # Return
@@ -410,12 +422,12 @@ class Splitter:
 def create_EEG_dataset(eeg_signals_path='/home/luigi/Documents/DrEEam/src/DreamDiffusion/datasets/eeg_5_95_std.pth', 
             splits_path = '/home/luigi/Documents/DrEEam/src/DreamDiffusion/datasets/block_splits_by_image_single.pth',
             # splits_path = '/home/luigi/Documents/DrEEam/src/DreamDiffusion/datasets/block_splits_by_image_all.pth',
-            image_transform=identity, subject = 0):
+            image_transform=identity, subject = 0, encoder_name = 'bendr'):
     # if subject == 0:
         # splits_path = '/home/luigi/Documents/DrEEam/src/DreamDiffusion/datasets/block_splits_by_image_all.pth'
     if isinstance(image_transform, list):
-        dataset_train = EEGDataset(eeg_signals_path, image_transform[0], subject )
-        dataset_test = EEGDataset(eeg_signals_path, image_transform[1], subject)
+        dataset_train = EEGDataset(eeg_signals_path, image_transform[0], subject, encoder_name)
+        dataset_test = EEGDataset(eeg_signals_path, image_transform[1], subject, encoder_name)
     else:
         dataset_train = EEGDataset(eeg_signals_path, image_transform, subject)
         dataset_test = EEGDataset(eeg_signals_path, image_transform, subject)

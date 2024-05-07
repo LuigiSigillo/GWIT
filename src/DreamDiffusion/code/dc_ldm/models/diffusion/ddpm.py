@@ -1069,8 +1069,11 @@ class LatentDiffusion(DDPM):
         if self.clip_tune:
             image_embeds = self.image_embedder(image_raw)
             #commmentato io
-            # loss_clip = self.cond_stage_model.get_clip_loss(re_latent, image_embeds)
-            loss_clip = self.cond_stage_model.get_clip_loss(c, image_embeds)
+            if self.cond_stage_model.mae.__class__.__name__== 'ConvEncoderBENDR':
+                loss_clip = self.cond_stage_model.get_clip_loss(c, image_embeds)
+            else:
+                loss_clip = self.cond_stage_model.get_clip_loss(re_latent, image_embeds)
+            
         # loss_recon = self.recon_loss(imgs, rencon)
         # loss_cls = self.cls_loss(label, pre_cls)
             loss += loss_clip
