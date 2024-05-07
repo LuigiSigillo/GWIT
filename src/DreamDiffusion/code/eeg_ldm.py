@@ -187,7 +187,7 @@ def get_args_parser():
     parser = argparse.ArgumentParser('Double Conditioning LDM Finetuning', add_help=False)
     # project parameters
     parser.add_argument('--seed', type=int)
-    parser.add_argument('--root_path', type=str, default = '/home/luigi/Documents/DrEEam/src/DreamDiffusion/')
+    parser.add_argument('--root_path', type=str, default = 'src/DreamDiffusion/')
     parser.add_argument('--pretrain_mbm_path', type=str)
     parser.add_argument('--checkpoint_path', type=str)
     parser.add_argument('--crop_ratio', type=float)
@@ -238,8 +238,11 @@ if __name__ == '__main__':
     args = args.parse_args()
     config = Config_Generative_Model()
     config = update_config(args, config)
-    config.pretrain_mbm_path = "/home/lopez/Documents/DrEEam/src/DreamDiffusion/results/eeg_pretrain/30-04-2024-21-15-15/checkpoints/checkpoint.pth" #"/home/lopez/Documents/DrEEam/checkpoints/romulan-phaser-63_encoder_best_val.pt"
-    #"/home/luigi/Documents/DrEEam/src/DreamDiffusion/pretrains/models/encoder_federica_checkpoint.pth"
+    config.pretrain_mbm_path = "src/DreamDiffusion/pretrains/models/encoder_loro_checkpoint.pth"
+    config.eeg_signals_path = "/leonardo_scratch/fast/IscrC_GenOpt/dataset/dreamdiff/eeg_5_95_std.pth"
+    config.splits_path = "/leonardo_scratch/fast/IscrC_GenOpt/dataset/dreamdiff/block_splits_by_image_single.pth" 
+ 
+    #"/home/lopez/Documents/DrEEam/checkpoints/romulan-phaser-63_encoder_best_val.pt"
     if config.checkpoint_path is not None:
         model_meta = torch.load(config.checkpoint_path, map_location='cpu')
         ckp = config.checkpoint_path

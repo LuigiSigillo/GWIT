@@ -193,8 +193,8 @@ class eLDM:
                  logger=None, ddim_steps=250, global_pool=True, use_time_cond=False, clip_tune = True, cls_tune = False):
         # self.ckp_path = os.path.join(pretrain_root, 'model.ckpt')
         # self.ckp_path = os.path.join(pretrain_root, 'models/v1-5-pruned.ckpt')
-        self.ckp_path = '/home/luigi/Documents/DrEEam/src/DreamDiffusion/pretrains/models/v1-5-pruned.ckpt'
-        self.config_path = '/home/luigi/Documents/DrEEam/src/DreamDiffusion/pretrains/models/config15.yaml' #os.path.join(pretrain_root, 'models/config15.yaml') 
+        self.ckp_path = 'src/DreamDiffusion/pretrains/models/v1-5-pruned.ckpt'
+        self.config_path = 'src/DreamDiffusion/pretrains/models/config15.yaml' #os.path.join(pretrain_root, 'models/config15.yaml') 
         config = OmegaConf.load(self.config_path)
         config.model.params.unet_config.params.use_time_cond = use_time_cond
         config.model.params.unet_config.params.global_pool = global_pool

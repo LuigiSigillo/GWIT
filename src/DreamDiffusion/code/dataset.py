@@ -107,7 +107,7 @@ def is_npy_ext(fname: Union[str, Path]) -> bool:
     return f'{ext}' == 'npy'# type: ignore
 
 class eeg_pretrain_dataset(Dataset):
-    def __init__(self, path='/home/luigi/Documents/DrEEam/src/DreamDiffusion/datasets/mne_data/', roi='VC', patch_size=16, transform=identity, aug_times=2, 
+    def __init__(self, path='src/DreamDiffusion/datasets/mne_data/', roi='VC', patch_size=16, transform=identity, aug_times=2, 
                 num_sub_limit=None, include_kam=False, include_hcp=True):
         super(eeg_pretrain_dataset, self).__init__()
         data = []
