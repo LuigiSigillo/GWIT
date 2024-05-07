@@ -424,21 +424,21 @@ class Splitter:
 
 
 def create_EEG_dataset(eeg_signals_path='/home/luigi/Documents/DrEEam/src/DreamDiffusion/datasets/eeg_5_95_std.pth', 
-            splits_path = '/home/luigi/Documents/DrEEam/src/DreamDiffusion/datasets/block_splits_by_image_single.pth',
+            splits_path='/home/luigi/Documents/DrEEam/src/DreamDiffusion/datasets/block_splits_by_image_single.pth',
             # splits_path = '/home/luigi/Documents/DrEEam/src/DreamDiffusion/datasets/block_splits_by_image_all.pth',
-            image_transform=identity, subject = 0, encoder_name = 'bendr', imagenet_path = '/mnt/media/luigi/dataset/imageNet_images/, only_eeg=False, **kwargs):
+            image_transform=identity, subject=0, encoder_name='bendr', imagenet_path='/mnt/media/luigi/dataset/imageNet_images/', only_eeg=False, **kwargs):
     # if subject == 0:
         # splits_path = '/home/luigi/Documents/DrEEam/src/DreamDiffusion/datasets/block_splits_by_image_all.pth'
     if isinstance(image_transform, list):
-        dataset_train = EEGDataset(eeg_signals_path, image_transform[0], subject, encoder_name, imagenet_path = imagenet_path, only_eeg=only_eeg)
+        dataset_train = EEGDataset(eeg_signals_path, image_transform[0], subject, encoder_name, imagenet_path=imagenet_path, only_eeg=only_eeg)
         dataset_test = EEGDataset(eeg_signals_path, image_transform[1], subject, encoder_name, only_eeg=only_eeg)
     else:
         dataset_train = EEGDataset(eeg_signals_path, image_transform, subject, only_eeg=only_eeg)
         dataset_test = EEGDataset(eeg_signals_path, image_transform, subject, only_eeg=only_eeg)
         dataset_val = EEGDataset(eeg_signals_path, image_transform, subject, only_eeg=only_eeg)
-    split_train = Splitter(dataset_train, split_path = splits_path, split_num = 0, split_name = 'train', subject= subject)
-    split_test = Splitter(dataset_test, split_path = splits_path, split_num = 0, split_name = 'test', subject = subject)
-    split_val = Splitter(dataset_val, split_path = splits_path, split_num = 0, split_name = 'val', subject = subject)
+    split_train = Splitter(dataset_train, split_path=splits_path, split_num=0, split_name='train', subject=subject)
+    split_test = Splitter(dataset_test, split_path=splits_path, split_num=0, split_name='test', subject=subject)
+    split_val = Splitter(dataset_val, split_path=splits_path, split_num=0, split_name='val', subject=subject)
    
     return (split_train, split_test, split_val)
 
