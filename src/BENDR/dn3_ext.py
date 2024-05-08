@@ -602,7 +602,7 @@ class BENDRContextualizer(nn.Module):
 
     def __init__(self, in_features, hidden_feedforward=3076, heads=8, layers=8, dropout=0.15, activation='gelu',
                  position_encoder=25, layer_drop=0.0, mask_p_t=0.1, mask_p_c=0.004, mask_t_span=6, mask_c_span=64,
-                 start_token=-5, finetuning=False):
+                 start_token=-5, finetuning=False, normal=True):
         super().__init__()
 
         self.dropout = dropout
@@ -649,6 +649,7 @@ class BENDRContextualizer(nn.Module):
 
         self.output_layer = nn.Conv1d(self._transformer_dim, in_features, 1)
         self.apply(self.init_bert_params)
+        self.normal = normal
 
     def init_bert_params(self, module):
         if isinstance(module, nn.Linear):
@@ -692,7 +693,9 @@ class BENDRContextualizer(nn.Module):
             if not self.training or torch.rand(1) > self.layer_drop:
                 x = layer(x)
 
-        return self.output_layer(x.permute([1, 2, 0]))
+        if self.normal:
+            return self.output_layer(x.permute([1, 2, 0]))
+        return x
 
     def freeze_features(self, unfreeze=False, finetuning=False):
         for param in self.parameters():

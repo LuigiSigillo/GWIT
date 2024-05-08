@@ -115,7 +115,7 @@ class cond_stage_model(nn.Module):
             contextualizer = contextualizer = BENDRContextualizer(512, finetuning=True,
                                                   mask_p_t=0.01, mask_p_c=0.005, layer_drop=0,
                                                   mask_c_span=0.1, dropout=0.,
-                                                  mask_t_span=0.1)
+                                                  mask_t_span=0.1, normal=False)
             bendr_encoder.load(metafile, strict=True)
             metafile_cont = metafile.replace('encoder', 'contextualizer')
             contextualizer.load(metafile_cont, strict=True)
@@ -128,8 +128,8 @@ class cond_stage_model(nn.Module):
             bendr_encoder = ConvEncoderBENDR(in_features=20, encoder_h=512)
         
         self.mae = nn.Sequential(bendr_encoder, contextualizer)
-        self.fmri_latent_dim = 512 #model.encoder_h
-        self.fmri_seq_len = 74# 86
+        self.fmri_latent_dim = 1536 #512 #model.encoder_h
+        self.fmri_seq_len = 75# 74
     
         # self.fmri_seq_len = model.num_patches
         # self.fmri_latent_dim = model.embed_dim
@@ -152,9 +152,10 @@ class cond_stage_model(nn.Module):
 
     def forward(self, x):
         # n, c, w = x.shape
-        latent_crossattn = self.mae(x)
+        latent_crossattn = self.mae(x) #torch.Size([3, 512, 75]) o senza conv1d torch.Size([75, 3, 1536])
+        print(latent_crossattn.shape)
         #bender has shape inverted
-        latent_crossattn = latent_crossattn.permute(0, 2, 1)
+        latent_crossattn = latent_crossattn.permute(1, 0, 2)
         # print("latent_crossattn: ", latent_crossattn.shape) # torch.Size([5, 128, 1024])
         latent_return = latent_crossattn
         if self.global_pool == False:
