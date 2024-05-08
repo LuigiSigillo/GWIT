@@ -244,6 +244,7 @@ if __name__ == '__main__':
     config = Config_Generative_Model()
     config = update_config(args, config)
     config.pretrain_mbm_path = "src/DreamDiffusion/pretrains/models/encoder_loro_checkpoint.pth"
+    config.pretrain_mbm_path = "/home/lopez/Documents/DrEEam/checkpoints/romulan-phaser-63_encoder_best_val.pt"
     config.eeg_signals_path = "/leonardo_scratch/fast/IscrC_GenOpt/dataset/dreamdiff/eeg_5_95_std.pth"
 
     if args.all_subjects:
@@ -255,7 +256,7 @@ if __name__ == '__main__':
         config.splits_path = "/leonardo_scratch/fast/IscrC_GenOpt/dataset/dreamdiff/block_splits_by_image_single.pth" 
 
     config.imagenet_path = "/leonardo_scratch/fast/IscrC_GenOpt/dataset/dreamdiff/imageNet_images"
-    #"/home/lopez/Documents/DrEEam/checkpoints/romulan-phaser-63_encoder_best_val.pt"
+   
     if config.checkpoint_path is not None:
         model_meta = torch.load(config.checkpoint_path, map_location='cpu')
         ckp = config.checkpoint_path
