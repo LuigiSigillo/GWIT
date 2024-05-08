@@ -143,7 +143,7 @@ def main(config):
     ])
     if config.dataset == 'EEG':
 
-        eeg_latents_dataset_train, eeg_latents_dataset_test = create_EEG_dataset(eeg_signals_path = config.eeg_signals_path, 
+        eeg_latents_dataset_train, eeg_latents_dataset_test, _ = create_EEG_dataset(eeg_signals_path = config.eeg_signals_path, 
                                                                                  splits_path = config.splits_path, 
                                                                                  image_transform=[img_transform_train, img_transform_test], 
                                                                                  subject = config.subject,
@@ -196,7 +196,7 @@ def get_args_parser():
     parser.add_argument('--checkpoint_path', type=str)
     parser.add_argument('--crop_ratio', type=float)
     parser.add_argument('--dataset', type=str)
-    parser.add_argument('--all_subjects', type=bool, action='store_true')
+    parser.add_argument('--all_subjects', action='store_true')
 
     # finetune parameters
     parser.add_argument('--batch_size', type=int)
@@ -243,10 +243,10 @@ if __name__ == '__main__':
     args = args.parse_args()
     config = Config_Generative_Model()
     config = update_config(args, config)
-    config.pretrain_mbm_path = "src/DreamDiffusion/pretrains/models/encoder_loro_checkpoint.pth"
-    config.pretrain_mbm_path = "/home/lopez/Documents/DrEEam/checkpoints/romulan-phaser-63_encoder_best_val.pt"
+    config.pretrain_mbm_path = "src/DreamDiffusion/pretrains/models/romulan-phaser-63_encoder_best_val.pt"
+    # config.pretrain_mbm_path = "/home/lopez/Documents/DrEEam/checkpoints/romulan-phaser-63_encoder_best_val.pt"
     config.eeg_signals_path = "/leonardo_scratch/fast/IscrC_GenOpt/dataset/dreamdiff/eeg_5_95_std.pth"
-
+    config.encoder_name = "bendr"
     if args.all_subjects:
         print('Using all subjects')
         config.splits_path = "/leonardo_scratch/fast/IscrC_GenOpt/dataset/dreamdiff/block_splits_by_image_all.pth"

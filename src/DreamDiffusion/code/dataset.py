@@ -304,7 +304,9 @@ class EEGDataset_s(Dataset):
 class EEGDataset(Dataset):
     
     # Constructor
-    def __init__(self, eeg_signals_path, image_transform=identity, subject=4, only_eeg=False, encoder_name = 'bendr', imagenet_path = '/mnt/media/luigi/dataset/imageNet_images/'):
+    def __init__(self, eeg_signals_path, image_transform=identity, subject=4, 
+                 encoder_name = 'bendr', imagenet_path = '/mnt/media/luigi/dataset/imageNet_images/',
+                   only_eeg=False):
         # Load EEG signals
         loaded = torch.load(eeg_signals_path)
         # if opt.subject!=0:
@@ -426,12 +428,13 @@ class Splitter:
 def create_EEG_dataset(eeg_signals_path='/home/luigi/Documents/DrEEam/src/DreamDiffusion/datasets/eeg_5_95_std.pth', 
             splits_path='/home/luigi/Documents/DrEEam/src/DreamDiffusion/datasets/block_splits_by_image_single.pth',
             # splits_path = '/home/luigi/Documents/DrEEam/src/DreamDiffusion/datasets/block_splits_by_image_all.pth',
-            image_transform=identity, subject=0, encoder_name='bendr', imagenet_path='/mnt/media/luigi/dataset/imageNet_images/', only_eeg=False, **kwargs):
+            image_transform=identity, subject=0, encoder_name='bendr', imagenet_path='/mnt/media/luigi/dataset/imageNet_images/', only_eeg=False):
     # if subject == 0:
         # splits_path = '/home/luigi/Documents/DrEEam/src/DreamDiffusion/datasets/block_splits_by_image_all.pth'
     if isinstance(image_transform, list):
         dataset_train = EEGDataset(eeg_signals_path, image_transform[0], subject, encoder_name, imagenet_path=imagenet_path, only_eeg=only_eeg)
-        dataset_test = EEGDataset(eeg_signals_path, image_transform[1], subject, encoder_name, only_eeg=only_eeg)
+        dataset_test = EEGDataset(eeg_signals_path, image_transform[1], subject, encoder_name,  imagenet_path=imagenet_path, only_eeg=only_eeg)
+        dataset_val = EEGDataset(eeg_signals_path, image_transform[1], subject, encoder_name,  imagenet_path=imagenet_path, only_eeg=only_eeg)
     else:
         dataset_train = EEGDataset(eeg_signals_path, image_transform, subject, only_eeg=only_eeg)
         dataset_test = EEGDataset(eeg_signals_path, image_transform, subject, only_eeg=only_eeg)
@@ -476,12 +479,12 @@ def channel_last(img):
         if img.shape[-1] == 3:
             return img
         return rearrange(img, 'c h w -> h w c')
-if __name__ == '__main__':
-    import scipy.io as scio
-    import copy
-    import shutil
-    dataset_train, dataset_test = create_EEG_dataset(eeg_signals_path='/home/luigi/Documents/DrEEam/dataset/eeg_5_95_std.pth',
-                                                     splits_path='/home/luigi/Documents/DrEEam/dataset/block_splits_by_image_single.pth',
-                                                     subject=0,
-                                                     only_eeg=True)
+# if __name__ == '__main__':
+#     import scipy.io as scio
+#     import copy
+#     import shutil
+#     dataset_train, dataset_test = create_EEG_dataset(eeg_signals_path='/home/luigi/Documents/DrEEam/dataset/eeg_5_95_std.pth',
+#                                                      splits_path='/home/luigi/Documents/DrEEam/dataset/block_splits_by_image_single.pth',
+#                                                      subject=0,
+#                                                      only_eeg=True)
 
