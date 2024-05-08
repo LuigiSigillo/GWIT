@@ -10,7 +10,7 @@ from pathlib import Path
 from tqdm import tqdm
 
 class MOABB(Dataset):
-    def __init__(self, root_dir, in_channels=128, data_len=960, corrupted_files='dataset/moabb/corrupted_files.json', load_preprocessed=False, redo_preprocessing=False):
+    def __init__(self, root_dir='moabb', in_channels=128, data_len=960, corrupted_files='dataset/moabb/corrupted_files.json', load_preprocessed=False, redo_preprocessing=False):
         self.root_dir = root_dir
         self.data_chan = in_channels
         self.data_len = data_len

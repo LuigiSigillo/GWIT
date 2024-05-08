@@ -51,7 +51,7 @@ class random_crop:
 def get_args_parser():
     parser = argparse.ArgumentParser('Double Conditioning LDM Finetuning', add_help=False)
     # project parameters
-    parser.add_argument('--root', type=str, default='/home/luigi/Documents/DrEEam/src/DreamDiffusion/')
+    parser.add_argument('--root', type=str, default='src/DreamDiffusion/')
     parser.add_argument('--dataset', type=str, default='GOD')
     parser.add_argument('--model_path', type=str)
 
@@ -64,14 +64,18 @@ if __name__ == '__main__':
     root = args.root
     target = args.dataset
     # args.model_path = "/home/luigi/Documents/DrEEam/src/DreamDiffusion/exps/results/generation/18-04-2024-17-01-08/checkpoint.pth" without state
-    args.model_path = "/home/luigi/Documents/DrEEam/src/DreamDiffusion/exps/results/generation/02-05-2024-17-17-07/checkpoint.pth"
+    args.model_path = "src/DreamDiffusion/exps/results/generation/02-05-2024-17-17-07/checkpoint.pth"
 
     sd = torch.load(args.model_path, map_location='cpu')
     config = sd['config']
     # update paths
     config.root_path = root
-    config.pretrain_mbm_path = "/home/lopez/Documents/DrEEam/checkpoints/romulan-phaser-63_encoder_best_val.pt" #'/home/luigi/Documents/DrEEam/src/DreamDiffusion/pretrains/models/encoder_github_checkpoint.pth'
-    config.pretrain_gm_path = '/home/luigi/Documents/DrEEam/src/DreamDiffusion/pretrains/'
+    config.pretrain_mbm_path = "src/DreamDiffusion/pretrains/models/qromulan-phaser-63_encoder_best_val.pt" #'/home/luigi/Documents/DrEEam/src/DreamDiffusion/pretrains/models/encoder_github_checkpoint.pth'
+    config.pretrain_gm_path = 'src/DreamDiffusion/pretrains/'
+    splits_path = "/leonardo_scratch/fast/IscrC_GenOpt/dataset/dreamdiff/block_splits_by_image_single.pth"
+    config.eeg_signals_path = "/leonardo_scratch/fast/IscrC_GenOpt/dataset/dreamdiff/eeg_5_95_std.pth"
+    config.imagenet_path = "/leonardo_scratch/fast/IscrC_GenOpt/dataset/dreamdiff/imageNet_images"
+
     print(config.__dict__)
 
     output_path = os.path.join(config.root_path, 'results', 'eval',  
@@ -93,10 +97,9 @@ if __name__ == '__main__':
     ])
 
     
-    splits_path = "/home/luigi/Documents/DrEEam/dataset/block_splits_by_image_single.pth"
-    config.eeg_signals_path = "/home/luigi/Documents/DrEEam/dataset/eeg_5_95_std.pth"
+
     dataset_train, dataset_test = create_EEG_dataset(eeg_signals_path = config.eeg_signals_path, splits_path = splits_path, 
-                image_transform=[img_transform_train, img_transform_test], subject = config.subject)
+                image_transform=[img_transform_train, img_transform_test], subject = config.subject, imagenet_path = config.imagenet_path)
     num_voxels = dataset_test.dataset.data_len
 
     # num_voxels = dataset_test.num_voxels

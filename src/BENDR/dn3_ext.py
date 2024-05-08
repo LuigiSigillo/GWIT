@@ -1,5 +1,7 @@
 import copy
+from matplotlib import pyplot as plt
 import mne
+from pandas import DataFrame
 import parse
 import tqdm
 
@@ -15,6 +17,7 @@ from dn3.trainable.processes import StandardClassification, BaseProcess
 from dn3.trainable.models import StrideClassifier, Classifier
 from dn3.trainable.layers import Flatten, Permute
 from dn3.utils import DN3ConfigException
+import wandb
 
 
 class LinearHeadBENDR(Classifier):
@@ -236,7 +239,7 @@ class BendingCollegeWav2Vec(BaseProcess):
     def __init__(self, encoder, context_fn, mask_rate=0.1, mask_span=6, learning_rate=0.01, temp=0.5,
                  permuted_encodings=False, permuted_contexts=False, enc_feat_l2=0.001, multi_gpu=False,
                  l2_weight_decay=1e-4, unmasked_negative_frac=0.25, encoder_grad_frac=1.0,
-                 num_negatives=100, **kwargs):
+                 num_negatives=100, batch_size=64, dataset_name='MOABB', masking_type='test', **kwargs):
         self.predict_length = mask_span
         self._enc_downsample = encoder.downsampling_factor
         if multi_gpu:
@@ -260,6 +263,11 @@ class BendingCollegeWav2Vec(BaseProcess):
         self.start_token = getattr(context_fn, 'start_token', None)
         self.unmasked_negative_frac = unmasked_negative_frac
         self.num_negatives = num_negatives
+        self.dataset_name = dataset_name
+        self.masking_type = masking_type
+        self.samples_to_plot = np.random.choice(batch_size, size=3, replace=False) # Select random samples from the batch for plot
+        self.channels_to_plot = np.random.choice(encoder.in_features, size=3, replace=False) # Select random channels for plot
+        print("Samples to plot: ", self.samples_to_plot, "Channels to plot: ", self.channels_to_plot)
 
     def description(self, sequence_len):
         encoded_samples = self._enc_downsample(sequence_len)
@@ -315,14 +323,16 @@ class BendingCollegeWav2Vec(BaseProcess):
         if self._training:
             mask = _make_mask((batch_size, samples), self.mask_rate, samples, self.mask_span)
         else:
-            mask = torch.zeros((batch_size, samples), requires_grad=False, dtype=torch.bool)
-            half_avg_num_seeds = max(1, int(samples * self.mask_rate * 0.5))
-            if samples <= self.mask_span * half_avg_num_seeds:
-                raise ValueError("Masking the entire span, pointless.")
-            mask[:, _make_span_from_seeds((samples // half_avg_num_seeds) * np.arange(half_avg_num_seeds).astype(int),
-                                              self.mask_span)] = True
-            ##### SAME MASKING AS TRAIN ####
-            # mask = _make_mask((batch_size, samples), self.mask_rate, samples, self.mask_span) 
+            if self.masking_type == 'train': # Same masking as train
+                mask = _make_mask((batch_size, samples), self.mask_rate, samples, self.mask_span)
+            else: # ORIGINAL BENDR: Different masking for test 
+                mask = torch.zeros((batch_size, samples), requires_grad=False, dtype=torch.bool)
+                half_avg_num_seeds = max(1, int(samples * self.mask_rate * 0.5))
+                if samples <= self.mask_span * half_avg_num_seeds:
+                    raise ValueError("Masking the entire span, pointless.")
+                mask[:, _make_span_from_seeds((samples // half_avg_num_seeds) * np.arange(half_avg_num_seeds).astype(int),
+                                                self.mask_span)] = True
+            
 
         c = self.context_fn(z, mask) 
         # print("Context shape: ", c.shape) # torch.Size([64, 512, 28])
@@ -334,6 +344,99 @@ class BendingCollegeWav2Vec(BaseProcess):
         # Prediction -> batch_size x predict_length x predict_length
         logits = self._calculate_similarity(unmasked_z, c, negatives)
         return logits, z, mask, c
+    
+    def plot_samples(self, inputs, bendr, reconstructed_bendr, mask, save_path='figures', log=False):
+        print("Plotting samples")
+        masked_bendr = bendr.clone()
+        masked_bendr.transpose(2, 1)[mask] = np.nan # for plotting purposes
+
+        indices = self.samples_to_plot
+
+        # Index into your data
+        input_samples = inputs[0].cpu().numpy()[indices]
+        bendr_samples = bendr[indices].cpu().numpy()
+        masked_bendr_samples = masked_bendr[indices].cpu().numpy()
+        reconstructed_bendr_samples = reconstructed_bendr[indices][:, :, 1:].cpu().numpy()
+
+        # Select random channels
+        channels = self.channels_to_plot
+        # print("channels: ", channels)
+
+        for i, index in enumerate(indices):
+            fig, axs = plt.subplots(len(channels), 4, figsize=(30, 10))
+            fig.suptitle(f'Sample {index}')
+
+            for j, channel in enumerate(channels):
+                input_samples_channel = input_samples[i, 0].squeeze()
+                bendr_samples_channel = bendr_samples[i, channel].squeeze()
+                masked_bendr_samples_channel = masked_bendr_samples[i, channel].squeeze()
+                reconstructed_bendr_samples_channel = reconstructed_bendr_samples[i, channel].squeeze()
+
+                axs[j, 0].plot(input_samples_channel)
+                axs[j, 0].set_title('Original EEG')
+                axs[j, 0].set_ylabel(f'Channel {channel+1}', fontsize=14)
+
+                axs[j, 1].plot(bendr_samples_channel)
+                axs[j, 1].set_title('Bendr')
+
+                axs[j, 2].plot(masked_bendr_samples_channel)
+                axs[j, 2].set_title('Masked Bendr')
+
+                axs[j, 3].plot(reconstructed_bendr_samples_channel)
+                axs[j, 3].set_title('Reconstructed Bendr')
+
+            if log:
+                wandb.log({f"Sample {index}": wandb.Image(fig)})
+            else:
+                plt.savefig(f"{save_path}/{self.dataset_name}_sample_{index}.png")
+
+    
+    def evaluate(self, dataset, plot=True, save_path='figures/', **loader_kwargs):
+        """
+        Calculate and return metrics for a dataset efficiently.
+        Also plot samples and include corr as metric.
+
+        Parameters
+        ----------
+        dataset: DN3ataset, DataLoader
+                 The dataset that will be used for evaluation, if not a DataLoader, one will be constructed
+        loader_kwargs: dict
+                       Args that will be passed to the dataloader, but `shuffle` and `drop_last` will be both be
+                       forced to `False`
+
+        Returns
+        -------
+        metrics : OrderedDict
+                Metric scores for the entire
+        """
+        # print("Efficient evaluation")
+        self.train(False)
+        dataset = self._make_dataloader(dataset, **loader_kwargs)
+        data_iterator = iter(dataset)
+        pbar = tqdm.trange(len(dataset), desc="Predicting efficiently")
+        log = list()
+        with torch.no_grad():
+            for iteration in pbar:
+                inputs = self._get_batch(data_iterator)
+                outputs = self.forward(*inputs)
+                metrics = self.calculate_metrics(inputs, outputs)
+                metrics['loss'] = self.calculate_loss(inputs, outputs).item()
+                metrics['iteration'] = iteration
+
+                _, bendr, mask, reconstructed_bendr = outputs
+                metrics['corr'] = np.corrcoef(bendr.cpu().numpy().flatten(), 
+                                                reconstructed_bendr[:, :, 1:].cpu().numpy().flatten())[0, 1]
+                log.append(metrics)
+
+                ## Plot some samples ###
+                if iteration == 0 and plot:
+                    self.plot_samples(inputs, bendr, reconstructed_bendr, mask, save_path, log=True)
+                
+        metrics = DataFrame(log)
+        metrics = metrics.mean().to_dict()
+        metrics.pop('iteration', None)
+        return metrics
+        
 
     @staticmethod
     def _mask_pct(inputs, outputs):
@@ -375,6 +478,7 @@ class ConvEncoderBENDR(_BENDREncoder):
                  dropout=0., projection_head=False, enc_downsample=(3, 2, 2, 2, 2, 2)):
         super().__init__(in_features, encoder_h)
         self.encoder_h = encoder_h
+        self.in_features = in_features
         if not isinstance(enc_width, (list, tuple)):
             enc_width = [enc_width]
         if not isinstance(enc_downsample, (list, tuple)):

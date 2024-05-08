@@ -11,6 +11,9 @@ import pytorch_lightning as pl
 from pytorch_lightning.loggers import WandbLogger
 import copy
 
+import sys
+sys.path.append('./src/DreamDiffusion/code/')
+
 # own code
 from config import Config_Generative_Model
 from dataset import  create_EEG_dataset
@@ -142,9 +145,10 @@ def main(config):
 
         eeg_latents_dataset_train, eeg_latents_dataset_test = create_EEG_dataset(eeg_signals_path = config.eeg_signals_path, 
                                                                                  splits_path = config.splits_path, 
-                                                                                image_transform=[img_transform_train, img_transform_test], 
+                                                                                 image_transform=[img_transform_train, img_transform_test], 
                                                                                  subject = config.subject,
                                                                                  encoder_name = config.encoder_name,
+                                                                                 imagenet_path = config.imagenet_path,
                                                                                  )
         # eeg_latents_dataset_train, eeg_latents_dataset_test = create_EEG_dataset_viz( image_transform=[img_transform_train, img_transform_test])
         num_voxels = eeg_latents_dataset_train.data_len
@@ -157,7 +161,7 @@ def main(config):
 
     if config.pretrain_mbm_path is not None:
         #commented the loading for BENDR 
-        pretrain_mbm_metafile = torch.load(config.pretrain_mbm_path, map_location='cpu') if config.encoder_name is not "bendr" else config.pretrain_mbm_path
+        pretrain_mbm_metafile = torch.load(config.pretrain_mbm_path, map_location='cpu') if config.encoder_name != "bendr" else config.pretrain_mbm_path
         # print('pretrain_mbm_path:', config.pretrain_mbm_path)
     else:
         pretrain_mbm_metafile = None
@@ -187,11 +191,12 @@ def get_args_parser():
     parser = argparse.ArgumentParser('Double Conditioning LDM Finetuning', add_help=False)
     # project parameters
     parser.add_argument('--seed', type=int)
-    parser.add_argument('--root_path', type=str, default = '/home/luigi/Documents/DrEEam/src/DreamDiffusion/')
+    parser.add_argument('--root_path', type=str, default = 'src/DreamDiffusion/')
     parser.add_argument('--pretrain_mbm_path', type=str)
     parser.add_argument('--checkpoint_path', type=str)
     parser.add_argument('--crop_ratio', type=float)
     parser.add_argument('--dataset', type=str)
+    parser.add_argument('--all_subjects', type=bool, action='store_true')
 
     # finetune parameters
     parser.add_argument('--batch_size', type=int)
@@ -238,8 +243,19 @@ if __name__ == '__main__':
     args = args.parse_args()
     config = Config_Generative_Model()
     config = update_config(args, config)
-    config.pretrain_mbm_path = "/home/lopez/Documents/DrEEam/src/DreamDiffusion/results/eeg_pretrain/30-04-2024-21-15-15/checkpoints/checkpoint.pth" #"/home/lopez/Documents/DrEEam/checkpoints/romulan-phaser-63_encoder_best_val.pt"
-    #"/home/luigi/Documents/DrEEam/src/DreamDiffusion/pretrains/models/encoder_federica_checkpoint.pth"
+    config.pretrain_mbm_path = "src/DreamDiffusion/pretrains/models/encoder_loro_checkpoint.pth"
+    config.eeg_signals_path = "/leonardo_scratch/fast/IscrC_GenOpt/dataset/dreamdiff/eeg_5_95_std.pth"
+
+    if args.all_subjects:
+        print('Using all subjects')
+        config.splits_path = "/leonardo_scratch/fast/IscrC_GenOpt/dataset/dreamdiff/block_splits_by_image_all.pth"
+        config.subject = 0
+    else:
+        print('Using single subject: ', config.subject)
+        config.splits_path = "/leonardo_scratch/fast/IscrC_GenOpt/dataset/dreamdiff/block_splits_by_image_single.pth" 
+
+    config.imagenet_path = "/leonardo_scratch/fast/IscrC_GenOpt/dataset/dreamdiff/imageNet_images"
+    #"/home/lopez/Documents/DrEEam/checkpoints/romulan-phaser-63_encoder_best_val.pt"
     if config.checkpoint_path is not None:
         model_meta = torch.load(config.checkpoint_path, map_location='cpu')
         ckp = config.checkpoint_path

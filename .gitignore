@@ -9,6 +9,7 @@ src/DreamDiffusion/results
 wandb/
 checkpoints/
 bendr.yaml
+.vscode/
 # Created by .ignore support plugin (hsz.mobi)
 ### Python template
 # Byte-compiled / optimized / DLL files

@@ -107,7 +107,7 @@ def is_npy_ext(fname: Union[str, Path]) -> bool:
     return f'{ext}' == 'npy'# type: ignore
 
 class eeg_pretrain_dataset(Dataset):
-    def __init__(self, path='/home/luigi/Documents/DrEEam/src/DreamDiffusion/datasets/mne_data/', roi='VC', patch_size=16, transform=identity, aug_times=2, 
+    def __init__(self, path='src/DreamDiffusion/datasets/mne_data/', roi='VC', patch_size=16, transform=identity, aug_times=2, 
                 num_sub_limit=None, include_kam=False, include_hcp=True):
         super(eeg_pretrain_dataset, self).__init__()
         data = []
@@ -304,7 +304,7 @@ class EEGDataset_s(Dataset):
 class EEGDataset(Dataset):
     
     # Constructor
-    def __init__(self, eeg_signals_path, image_transform=identity, subject = 4, encoder_name = 'bendr'):
+    def __init__(self, eeg_signals_path, image_transform=identity, subject=4, only_eeg=False, encoder_name = 'bendr', imagenet_path = '/mnt/media/luigi/dataset/imageNet_images/'):
         # Load EEG signals
         loaded = torch.load(eeg_signals_path)
         # if opt.subject!=0:
@@ -314,13 +314,14 @@ class EEGDataset(Dataset):
         if subject!=0:
             self.data = [loaded['dataset'][i] for i in range(len(loaded['dataset']) ) if loaded['dataset'][i]['subject']==subject]
         else:
-            self.data = loaded['dataset']        
+            self.data = loaded['dataset']       
         self.labels = loaded["labels"]
         self.images = loaded["images"]
-        self.imagenet = '/mnt/media/luigi/dataset/imageNet_images/'
+        self.imagenet = imagenet_path
         self.image_transform = image_transform
         self.num_voxels = 440
         self.data_len = 512
+        self.only_eeg = only_eeg
         # Compute size
         self.size = len(self.data)
         self.processor = AutoProcessor.from_pretrained("openai/clip-vit-large-patch14")
@@ -346,7 +347,8 @@ class EEGDataset(Dataset):
         if self.encoder_name == 'bendr':
             eeg = self.data[i]["eeg"].float()
             eeg = eeg[:,20:460]
-            ##### 2023 2 13 add preprocess and transpose
+            # print(eeg.shape)
+        ##### 2023 2 13 add preprocess and transpose
             ### lopex noon la vuole piu
             # eeg = np.array(eeg.transpose(0,1))
             # x = np.linspace(0, 1, eeg.shape[-1])
@@ -368,6 +370,9 @@ class EEGDataset(Dataset):
             f = interp1d(x, eeg)
             eeg = f(x2)
             eeg = torch.from_numpy(eeg).float()
+        if self.only_eeg:
+            return {'eeg': eeg}
+        
         ##### 2023 2 13 add preprocess
         label = torch.tensor(self.data[i]["label"]).long()
 
@@ -399,7 +404,6 @@ class Splitter:
 
         # Load split
         loaded = torch.load(split_path)
-
         self.split_idx = loaded["splits"][split_num][split_name]
         
         # Filter data
@@ -420,23 +424,23 @@ class Splitter:
 
 
 def create_EEG_dataset(eeg_signals_path='/home/luigi/Documents/DrEEam/src/DreamDiffusion/datasets/eeg_5_95_std.pth', 
-            splits_path = '/home/luigi/Documents/DrEEam/src/DreamDiffusion/datasets/block_splits_by_image_single.pth',
+            splits_path='/home/luigi/Documents/DrEEam/src/DreamDiffusion/datasets/block_splits_by_image_single.pth',
             # splits_path = '/home/luigi/Documents/DrEEam/src/DreamDiffusion/datasets/block_splits_by_image_all.pth',
-            image_transform=identity, subject = 0, encoder_name = 'bendr'):
+            image_transform=identity, subject=0, encoder_name='bendr', imagenet_path='/mnt/media/luigi/dataset/imageNet_images/', only_eeg=False, **kwargs):
     # if subject == 0:
         # splits_path = '/home/luigi/Documents/DrEEam/src/DreamDiffusion/datasets/block_splits_by_image_all.pth'
     if isinstance(image_transform, list):
-        dataset_train = EEGDataset(eeg_signals_path, image_transform[0], subject, encoder_name)
-        dataset_test = EEGDataset(eeg_signals_path, image_transform[1], subject, encoder_name)
+        dataset_train = EEGDataset(eeg_signals_path, image_transform[0], subject, encoder_name, imagenet_path=imagenet_path, only_eeg=only_eeg)
+        dataset_test = EEGDataset(eeg_signals_path, image_transform[1], subject, encoder_name, only_eeg=only_eeg)
     else:
-        dataset_train = EEGDataset(eeg_signals_path, image_transform, subject)
-        dataset_test = EEGDataset(eeg_signals_path, image_transform, subject)
-    split_train = Splitter(dataset_train, split_path = splits_path, split_num = 0, split_name = 'train', subject= subject)
-    split_test = Splitter(dataset_test, split_path = splits_path, split_num = 0, split_name = 'test', subject = subject)
+        dataset_train = EEGDataset(eeg_signals_path, image_transform, subject, only_eeg=only_eeg)
+        dataset_test = EEGDataset(eeg_signals_path, image_transform, subject, only_eeg=only_eeg)
+        dataset_val = EEGDataset(eeg_signals_path, image_transform, subject, only_eeg=only_eeg)
+    split_train = Splitter(dataset_train, split_path=splits_path, split_num=0, split_name='train', subject=subject)
+    split_test = Splitter(dataset_test, split_path=splits_path, split_num=0, split_name='test', subject=subject)
+    split_val = Splitter(dataset_val, split_path=splits_path, split_num=0, split_name='val', subject=subject)
    
-
-
-    return (split_train, split_test)
+    return (split_train, split_test, split_val)
 
 
 
@@ -476,4 +480,8 @@ if __name__ == '__main__':
     import scipy.io as scio
     import copy
     import shutil
+    dataset_train, dataset_test = create_EEG_dataset(eeg_signals_path='/home/luigi/Documents/DrEEam/dataset/eeg_5_95_std.pth',
+                                                     splits_path='/home/luigi/Documents/DrEEam/dataset/block_splits_by_image_single.pth',
+                                                     subject=0,
+                                                     only_eeg=True)
 
