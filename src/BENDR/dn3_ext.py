@@ -695,7 +695,7 @@ class BENDRContextualizer(nn.Module):
 
         if self.normal:
             return self.output_layer(x.permute([1, 2, 0]))
-        return x
+        return self.norm(x)
 
     def freeze_features(self, unfreeze=False, finetuning=False):
         for param in self.parameters():

@@ -108,14 +108,19 @@ class cond_stage_model(nn.Module):
         if metafile is not None:
             print("Loading encoder from checkpoint")
 
+            
+
             bendr_encoder  = ConvEncoderBENDR(in_features=128, 
                                encoder_h=512, 
                                enc_downsample=[3, 2] , 
                                enc_width=[3, 2] )
+            encoded_samples = bendr_encoder.downsampling_factor(1026)
+            mask_t_span = int(0.1 * encoded_samples)
+            mask_c_span = int(0.1 * 512)
             contextualizer = contextualizer = BENDRContextualizer(512, finetuning=True,
                                                   mask_p_t=0.01, mask_p_c=0.005, layer_drop=0,
-                                                  mask_c_span=0.1, dropout=0.,
-                                                  mask_t_span=0.1, normal=False)
+                                                  mask_c_span=mask_c_span, dropout=0.,
+                                                  mask_t_span=mask_t_span, normal=False)
             bendr_encoder.load(metafile, strict=True)
             metafile_cont = metafile.replace('encoder', 'contextualizer')
             contextualizer.load(metafile_cont, strict=True)
@@ -153,7 +158,6 @@ class cond_stage_model(nn.Module):
     def forward(self, x):
         # n, c, w = x.shape
         latent_crossattn = self.mae(x) #torch.Size([3, 512, 75]) o senza conv1d torch.Size([75, 3, 1536])
-        print(latent_crossattn.shape)
         #bender has shape inverted
         latent_crossattn = latent_crossattn.permute(1, 0, 2)
         # print("latent_crossattn: ", latent_crossattn.shape) # torch.Size([5, 128, 1024])
