@@ -65,16 +65,20 @@ if __name__ == '__main__':
     target = args.dataset
     # args.model_path = "/home/luigi/Documents/DrEEam/src/DreamDiffusion/exps/results/generation/18-04-2024-17-01-08/checkpoint.pth" without state
     args.model_path = "src/DreamDiffusion/exps/results/generation/02-05-2024-17-17-07/checkpoint.pth"
-
+    args.model_path = "src/DreamDiffusion/exps/results/generation/07-05-2024-12-09-20/checkpoint.pth"
     sd = torch.load(args.model_path, map_location='cpu')
     config = sd['config']
     # update paths
-    config.root_path = root
-    config.pretrain_mbm_path = "src/DreamDiffusion/pretrains/models/qromulan-phaser-63_encoder_best_val.pt" #'/home/luigi/Documents/DrEEam/src/DreamDiffusion/pretrains/models/encoder_github_checkpoint.pth'
+    # config.root_path = "/leonardo_scratch/fast/IscrC_GenOpt/"
+    config.root_path = "/mnt/media/luigi/"
+    config.encoder_name = "loro"
+
+    # config.pretrain_mbm_path = "src/DreamDiffusion/pretrains/models/romulan-phaser-63_encoder_best_val.pt"
+    config.pretrain_mbm_path = "/home/lopez/Documents/DrEEam/src/DreamDiffusion/results/eeg_pretrain/30-04-2024-21-15-15/checkpoints/checkpoint.pth"
     config.pretrain_gm_path = 'src/DreamDiffusion/pretrains/'
-    splits_path = "/leonardo_scratch/fast/IscrC_GenOpt/dataset/dreamdiff/block_splits_by_image_single.pth"
-    config.eeg_signals_path = "/leonardo_scratch/fast/IscrC_GenOpt/dataset/dreamdiff/eeg_5_95_std.pth"
-    config.imagenet_path = "/leonardo_scratch/fast/IscrC_GenOpt/dataset/dreamdiff/imageNet_images"
+    splits_path = config.root_path+"dataset/dreamdiff/block_splits_by_image_single.pth"
+    config.eeg_signals_path = config.root_path+"dataset/dreamdiff/eeg_5_95_std.pth"
+    config.imagenet_path = config.root_path+"dataset/dreamdiff/imageNet_images"
 
     print(config.__dict__)
 
@@ -98,8 +102,8 @@ if __name__ == '__main__':
 
     
 
-    dataset_train, dataset_test = create_EEG_dataset(eeg_signals_path = config.eeg_signals_path, splits_path = splits_path, 
-                image_transform=[img_transform_train, img_transform_test], subject = config.subject, imagenet_path = config.imagenet_path)
+    dataset_train, dataset_test, dataest_eval = create_EEG_dataset(eeg_signals_path = config.eeg_signals_path, splits_path = splits_path, 
+                image_transform=[img_transform_train, img_transform_test], subject = config.subject, imagenet_path = config.imagenet_path, encoder_name  = config.encoder_name)
     num_voxels = dataset_test.dataset.data_len
 
     # num_voxels = dataset_test.num_voxels
@@ -107,10 +111,12 @@ if __name__ == '__main__':
     # prepare pretrained mae 
     pretrain_mbm_metafile = config.pretrain_mbm_path # torch.load(config.pretrain_mbm_path, map_location='cpu')
     # pretrain_mbm_metafile = None
-    if pretrain_mbm_metafile is None:
-        print('pretrain_mbm_metafile: ', pretrain_mbm_metafile)
+    if config.pretrain_mbm_path is not None:
+        #commented the loading for BENDR 
+        pretrain_mbm_metafile = torch.load(config.pretrain_mbm_path, map_location='cpu') if config.encoder_name != "bendr" else config.pretrain_mbm_path
+        # print('pretrain_mbm_path:', config.pretrain_mbm_path)
     else:
-        print('pretrain_mbm_metafile: NOT NONE')
+        pretrain_mbm_metafile = None
     # create generateive model
     generative_model = eLDM(pretrain_mbm_metafile, num_voxels,
                 device=device, pretrain_root=config.pretrain_gm_path, logger=config.logger,

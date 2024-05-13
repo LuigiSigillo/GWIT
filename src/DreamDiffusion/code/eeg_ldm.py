@@ -244,7 +244,6 @@ if __name__ == '__main__':
     config = Config_Generative_Model()
     config = update_config(args, config)
     config.pretrain_mbm_path = "src/DreamDiffusion/pretrains/models/romulan-phaser-63_encoder_best_val.pt"
-    # config.pretrain_mbm_path = "/home/lopez/Documents/DrEEam/checkpoints/romulan-phaser-63_encoder_best_val.pt"
     config.eeg_signals_path = "/leonardo_scratch/fast/IscrC_GenOpt/dataset/dreamdiff/eeg_5_95_std.pth"
     config.encoder_name = "bendr"
     if args.all_subjects:
