@@ -350,7 +350,7 @@ class ControlNetModel(ModelMixin, ConfigMixin, FromOriginalModelMixin):
         #     conditioning_channels=conditioning_channels,
         # )
         import sys
-        sys.path.append('/home/luigi/Documents/DrEEam/src/diffusers/src/diffusers/models')
+        sys.path.append('/leonardo_scratch/fast/IscrC_GenOpt/luigi/Documents/DrEEam/src/diffusers/src/diffusers/models')
         print("STO USANDO LA LIBRERIA GIUSTA")
 
         from controlnet_conditioning_eeg import ControlNetEEGConditioningEmbedding
