@@ -718,10 +718,13 @@ def make_train_dataset(args, tokenizer, accelerator):
         examples["pixel_values"] = images
         examples["conditioning_pixel_values"] = conditioning_images
 
-        # TO make null the captions for EEG
+        # TO make fixed the captions for EEG
         examples[caption_column] = len(examples[caption_column])*["real world image views or object"]
-        
+
         examples["input_ids"] = tokenize_captions(examples)
+
+        if "ALL" in args.dataset_name:
+            examples["subject"] = examples["subject"]
 
         return examples
 
@@ -746,6 +749,7 @@ def collate_fn(examples):
         "pixel_values": pixel_values,
         "conditioning_pixel_values": conditioning_pixel_values,
         "input_ids": input_ids,
+        "subjects": torch.stack([example["subject"] for example in examples]),
     }
 
 
@@ -1076,6 +1080,7 @@ def main(args):
                     encoder_hidden_states=encoder_hidden_states,
                     controlnet_cond=controlnet_image,
                     return_dict=False,
+                    added_cond_kwargs={"eeg_subjects": batch["eeg_subjects"]},
                 )
 
                 # Predict the noise residual
