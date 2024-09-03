@@ -1,0 +1,20 @@
+accelerate launch train_controlnet.py \
+ --pretrained_model_name_or_path="stabilityai/stable-diffusion-2-1-base" \
+ --output_dir="model_out" \
+ --dataset_name=luigi-s/EEG_Image \
+ --conditioning_image_column=conditioning_image \
+ --image_column=image \
+ --caption_column=caption \
+ --resolution=512 \
+ --learning_rate=1e-5 \
+ --train_batch_size=4 \
+ --num_train_epochs=3 \
+ --tracker_project_name="controlnet" \
+ --enable_xformers_memory_efficient_attention \
+ --checkpointing_steps=5000 \
+ --validation_steps=5000 \
+ --report_to wandb \
+
+ --validation_image "./face_landmarks1.jpeg" "./face_landmarks2.jpeg" "./face_landmarks3.jpeg" \
+ --validation_prompt "High-quality close-up dslr photo of man wearing a hat with trees in the background" "Girl smiling, professional dslr photograph, dark background, studio lights, high quality" "Portrait of a clown face, oil on canvas, bittersweet expression" \
+ 
