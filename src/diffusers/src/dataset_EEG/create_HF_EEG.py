@@ -139,3 +139,9 @@ from datasets import load_dataset
 data = load_dataset('luigi-s/EEG_Image_ALL_subj', split='train')
 data = load_dataset('luigi-s/EEG_Image_ALL_subj', split='validation')
 data = load_dataset('luigi-s/EEG_Image_ALL_subj', split='test')
+
+
+for d in data:
+    # print(d['caption'], d['label_folder'])
+    print(d['subject'])
+    

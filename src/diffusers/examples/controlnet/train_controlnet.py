@@ -130,12 +130,12 @@ def log_validation(
     data_val = load_dataset("luigi-s/EEG_Image", split="validation").with_format(type='torch')
 
     # for validation_prompt, validation_image in zip(validation_prompts, validation_images):
-    for i in range(10, 20):
+    for i in range(0, 10):
         # validation_image = Image.open(validation_image).convert("RGB")
         #conditioning image sarebbe
         validation_image = data_val[i]['conditioning_image'].unsqueeze(0).to(accelerator.device) #eeg DEVE essere #,128,512
         #TODO metto natural image per non condizniore generaizone su label che non ho in inferenza
-        validation_prompt = data_val[i]['caption']
+        validation_prompt = "real world image views or object" if args.caption_fixed else data_val[i]['caption'] 
         # print(validation_prompt, data_val[i]['label_folder'])
         validation_gt = data_val[i]['image'].unsqueeze(0).to(accelerator.device)
         images = []
@@ -148,6 +148,7 @@ def log_validation(
 
             images.append(image)
 
+        validation_prompt = data_val[i]['caption'] # i want logged the class name even if i choose to use the fixed caption
         image_logs.append(
             {"validation_image": validation_gt, "images": images, "validation_prompt": validation_prompt}
         )
@@ -571,6 +572,12 @@ def parse_args(input_args=None):
         ),
     )
 
+    parser.add_argument(
+        "--caption_fixed",
+        action="store_true",
+        help="Whether or not to use a fixed caption such as real world image views or object and not the label",
+    )
+
     if input_args is not None:
         args = parser.parse_args(input_args)
     else:
@@ -719,12 +726,11 @@ def make_train_dataset(args, tokenizer, accelerator):
         examples["conditioning_pixel_values"] = conditioning_images
 
         # TO make fixed the captions for EEG
-        examples[caption_column] = len(examples[caption_column])*["real world image views or object"]
+        if args.caption_fixed:
+            examples[caption_column] = len(examples[caption_column])*["real world image views or object"]
 
         examples["input_ids"] = tokenize_captions(examples)
 
-        if "ALL" in args.dataset_name:
-            examples["subject"] = examples["subject"]
 
         return examples
 
@@ -744,12 +750,18 @@ def collate_fn(examples):
     conditioning_pixel_values = torch.stack([example["conditioning_pixel_values"] for example in examples])
     conditioning_pixel_values = conditioning_pixel_values.to(memory_format=torch.contiguous_format).float()
     input_ids = torch.stack([example["input_ids"] for example in examples])
+    
+    if "ALL" in args.dataset_name:
+        # print([example["subject"] for example in examples])
+        # Convert each integer subject to a tensor before stacking
+        subjects = torch.stack([torch.tensor(example["subject"]) for example in examples])
+
 
     return {
         "pixel_values": pixel_values,
         "conditioning_pixel_values": conditioning_pixel_values,
         "input_ids": input_ids,
-        "subjects": torch.stack([example["subject"] for example in examples]),
+        "eeg_subjects": subjects  if "ALL" in args.dataset_name else torch.tensor([4]*input_ids.shape[0]),
     }
 
 

@@ -42,7 +42,7 @@ class ControlNetEEGConditioningEmbedding(nn.Module):
         conditioning_channels: int = 128,
         block_out_channels: Tuple[int, ...] = (320, 640, 1280, 2560),
         block_strides: Tuple[int, ...] = (5, 2, 2, 2),
-        n_subjects=6
+        n_subjects=7
     ):
         super().__init__()
         self.subj_layers = SubjectLayers(conditioning_channels, conditioning_channels, n_subjects)
