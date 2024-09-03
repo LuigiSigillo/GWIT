@@ -810,6 +810,7 @@ class ControlNetModel(ModelMixin, ConfigMixin, FromOriginalModelMixin):
         sample = self.conv_in(sample)
 
         #TODO add subjects in forward
+        eeg_subjects = added_cond_kwargs.get("eeg_subjects")
         controlnet_cond = self.controlnet_cond_embedding(controlnet_cond, torch.tensor([4]*sample.shape[0], device=sample.device))
         # print(sample.shape, controlnet_cond.shape)
         sample = sample + controlnet_cond
