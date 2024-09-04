@@ -136,10 +136,10 @@ def log_validation(
         validation_image = data_val[i]['conditioning_image'].unsqueeze(0).to(accelerator.device) #eeg DEVE essere #,128,512
         #TODO metto natural image per non condizniore generaizone su label che non ho in inferenza
         #teoricmamente sempre cosi dovrebbe essere in iferenxza
-        validation_prompt = "real world image views or object" #if args.caption_fixed else data_val[i]['caption'] 
+        validation_prompt = "image" #if args.caption_fixed else data_val[i]['caption'] 
         # print(validation_prompt, data_val[i]['label_folder'])
         validation_gt = data_val[i]['image'].unsqueeze(0).to(accelerator.device)
-        subjects = data_val[i]['subject'].unsqueeze(0).to(accelerator.device)
+        subjects = data_val[i]['subject'].unsqueeze(0).to(accelerator.device) if "ALL" in args.dataset_name else torch.tensor([4]).unsqueeze(0).to(accelerator.device)
         images = []
 
         for _ in range(args.num_validation_images):
@@ -577,7 +577,7 @@ def parse_args(input_args=None):
     parser.add_argument(
         "--caption_fixed",
         action="store_true",
-        help="Whether or not to use a fixed caption such as real world image views or object and not the label",
+        help="Whether or not to use a fixed caption such as image and not the label",
     )
 
     if input_args is not None:
@@ -729,7 +729,7 @@ def make_train_dataset(args, tokenizer, accelerator):
 
         # TO make fixed the captions for EEG
         if args.caption_fixed:
-            examples[caption_column] = len(examples[caption_column])*["real world image views or object"]
+            examples[caption_column] = len(examples[caption_column])*["image"]
 
         examples["input_ids"] = tokenize_captions(examples)
 
