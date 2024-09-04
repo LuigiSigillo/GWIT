@@ -127,7 +127,7 @@ def log_validation(
     image_logs = []
     inference_ctx = contextlib.nullcontext() if is_final_validation else torch.autocast("cuda")
     
-    data_val = load_dataset("luigi-s/EEG_Image", split="validation").with_format(type='torch')
+    data_val = load_dataset(args.dataset_name, split="validation").with_format(type='torch')
 
     # for validation_prompt, validation_image in zip(validation_prompts, validation_images):
     for i in range(0, 10):
@@ -135,15 +135,17 @@ def log_validation(
         #conditioning image sarebbe
         validation_image = data_val[i]['conditioning_image'].unsqueeze(0).to(accelerator.device) #eeg DEVE essere #,128,512
         #TODO metto natural image per non condizniore generaizone su label che non ho in inferenza
-        validation_prompt = "real world image views or object" if args.caption_fixed else data_val[i]['caption'] 
+        #teoricmamente sempre cosi dovrebbe essere in iferenxza
+        validation_prompt = "real world image views or object" #if args.caption_fixed else data_val[i]['caption'] 
         # print(validation_prompt, data_val[i]['label_folder'])
         validation_gt = data_val[i]['image'].unsqueeze(0).to(accelerator.device)
+        subjects = data_val[i]['subject'].unsqueeze(0).to(accelerator.device)
         images = []
 
         for _ in range(args.num_validation_images):
             with inference_ctx:
                 image = pipeline(
-                    validation_prompt, validation_image, num_inference_steps=20, generator=generator
+                    validation_prompt, validation_image, num_inference_steps=20, generator=generator, subjects = subjects
                 ).images[0]
 
             images.append(image)

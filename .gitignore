@@ -1,4 +1,7 @@
-.out
+src/diffusers/examples/controlnet/model_out_MULTISUB_FIXED_CAPTION
+src/diffusers/examples/controlnet/model_out_MULTISUB_LABEL_CAPTION
+
+*.out
 exps/
 dataset/data_10-20/mne_data/*
 dataset/eeg_5_95_std.pth
