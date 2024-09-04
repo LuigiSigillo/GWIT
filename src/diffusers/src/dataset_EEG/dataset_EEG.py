@@ -27,6 +27,7 @@ class EEGDataset(Dataset):
         #     self.data = [loaded['dataset'][i] for i in range(len(loaded['dataset']) ) if loaded['dataset'][i]['subject']==opt.subject]
         # else:
         # print(loaded)
+        self.subject = subject
         if subject!=0:
             self.data = [loaded['dataset'][i] for i in range(len(loaded['dataset']) ) if loaded['dataset'][i]['subject']==subject]
         else:

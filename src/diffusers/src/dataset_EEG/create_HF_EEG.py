@@ -23,12 +23,12 @@ class random_crop:
 
 
 def channel_last(img):
-        if img.shape[-1] == 3:
-            return img
-        return rearrange(img, 'c h w -> h w c')
+    if img.shape[-1] == 3:
+        return img
+    return rearrange(img, 'c h w -> h w c')
 
 eeg_signals_path = '/mnt/media/luigi/dataset/dreamdiff/eeg_5_95_std.pth'
-splits_path = '/mnt/media/luigi/dataset/dreamdiff/block_splits_by_image_single.pth'
+splits_path = '/mnt/media/luigi/dataset/dreamdiff/block_splits_by_image_all.pth'
 imagenet_path = '/mnt/media/luigi/dataset/dreamdiff/imageNet_images/'
 
 crop_ratio = 0.2
@@ -60,53 +60,53 @@ features = Features({"image": Image(),
                     }
                     )
 
-dataset_train_l, dataset_test_l, dataset_val_l = [], [], []
+# dataset_train_l, dataset_test_l, dataset_val_l = [], [], []
 
-for subject in range(6):
-    dataset_train = EEGDataset(eeg_signals_path, image_transform[0], subject, encoder_name, imagenet_path=imagenet_path, only_eeg=only_eeg)
-    dataset_test = EEGDataset(eeg_signals_path, image_transform[1], subject, encoder_name,  imagenet_path=imagenet_path, only_eeg=only_eeg)
-    dataset_val = EEGDataset(eeg_signals_path, image_transform[1], subject, encoder_name,  imagenet_path=imagenet_path, only_eeg=only_eeg)
+# for subject in range(6):
+#     dataset_train = EEGDataset(eeg_signals_path, image_transform[0], subject, encoder_name, imagenet_path=imagenet_path, only_eeg=only_eeg)
+#     dataset_test = EEGDataset(eeg_signals_path, image_transform[1], subject, encoder_name,  imagenet_path=imagenet_path, only_eeg=only_eeg)
+#     dataset_val = EEGDataset(eeg_signals_path, image_transform[1], subject, encoder_name,  imagenet_path=imagenet_path, only_eeg=only_eeg)
 
-    split_train = Splitter(dataset_train, split_path=splits_path, split_num=0, split_name='train', subject=subject)
-    split_test = Splitter(dataset_test, split_path=splits_path, split_num=0, split_name='test', subject=subject)
-    split_val = Splitter(dataset_val, split_path=splits_path, split_num=0, split_name='val', subject=subject)
+#     split_train = Splitter(dataset_train, split_path=splits_path, split_num=0, split_name='train', subject=subject)
+#     split_test = Splitter(dataset_test, split_path=splits_path, split_num=0, split_name='test', subject=subject)
+#     split_val = Splitter(dataset_val, split_path=splits_path, split_num=0, split_name='val', subject=subject)
     
-    dataset_train_l.append(split_train)
-    dataset_test_l.append(split_test)
-    dataset_val_l.append(split_val)
+#     dataset_train_l.append(split_train)
+#     dataset_test_l.append(split_test)
+#     dataset_val_l.append(split_val)
 
+subject = 0 # 0 = ALL
+dataset_train = EEGDataset(eeg_signals_path, image_transform[0], subject, encoder_name, imagenet_path=imagenet_path, only_eeg=only_eeg)
+dataset_test = EEGDataset(eeg_signals_path, image_transform[1], subject, encoder_name,  imagenet_path=imagenet_path, only_eeg=only_eeg)
+dataset_val = EEGDataset(eeg_signals_path, image_transform[1], subject, encoder_name,  imagenet_path=imagenet_path, only_eeg=only_eeg)
 
-# dataset_train = EEGDataset(eeg_signals_path, image_transform[0], subject, encoder_name, imagenet_path=imagenet_path, only_eeg=only_eeg)
-# dataset_test = EEGDataset(eeg_signals_path, image_transform[1], subject, encoder_name,  imagenet_path=imagenet_path, only_eeg=only_eeg)
-# dataset_val = EEGDataset(eeg_signals_path, image_transform[1], subject, encoder_name,  imagenet_path=imagenet_path, only_eeg=only_eeg)
-
-# split_train = Splitter(dataset_train, split_path=splits_path, split_num=0, split_name='train', subject=subject)
-# split_test = Splitter(dataset_test, split_path=splits_path, split_num=0, split_name='test', subject=subject)
-# split_val = Splitter(dataset_val, split_path=splits_path, split_num=0, split_name='val', subject=subject)
+split_train = Splitter(dataset_train, split_path=splits_path, split_num=0, split_name='train', subject=subject)
+split_test = Splitter(dataset_test, split_path=splits_path, split_num=0, split_name='test', subject=subject)
+split_val = Splitter(dataset_val, split_path=splits_path, split_num=0, split_name='val', subject=subject)
 
 
 def gen_train():
     ## or if it's an IterableDataset
-    for ex in dataset_train_l:
+    for ex in split_train:
         if ex is None:
             continue
         yield ex
 def gen_test():
     ## or if it's an IterableDataset
-    for ex in dataset_test_l:
+    for ex in split_test:
         if ex is None:
             continue
         yield ex
 def gen_val():
     ## or if it's an IterableDataset
-    for ex in dataset_val_l:
+    for ex in split_val:
         if ex is None:
             continue
         yield ex
 
-dataset_train_l = dataset_train_l[0] + dataset_train_l[1] + dataset_train_l[2] + dataset_train_l[3] + dataset_train_l[4] + dataset_train_l[5]
-dataset_test_l = dataset_test_l[0] + dataset_test_l[1] + dataset_test_l[2] + dataset_test_l[3] + dataset_test_l[4] + dataset_test_l[5]
-dataset_val_l = dataset_val_l[0] + dataset_val_l[1] + dataset_val_l[2] + dataset_val_l[3] + dataset_val_l[4] + dataset_val_l[5]
+# dataset_train_l = dataset_train_l[0] + dataset_train_l[1] + dataset_train_l[2] + dataset_train_l[3] + dataset_train_l[4] + dataset_train_l[5]
+# dataset_test_l = dataset_test_l[0] + dataset_test_l[1] + dataset_test_l[2] + dataset_test_l[3] + dataset_test_l[4] + dataset_test_l[5]
+# dataset_val_l = dataset_val_l[0] + dataset_val_l[1] + dataset_val_l[2] + dataset_val_l[3] + dataset_val_l[4] + dataset_val_l[5]
 
 
 dset_train = Dataset.from_generator(gen_train, split='train',features=features).with_format(type='torch')
