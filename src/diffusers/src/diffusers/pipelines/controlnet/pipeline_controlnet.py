@@ -926,6 +926,7 @@ class StableDiffusionControlNetPipeline(
             Union[Callable[[int, int, Dict], None], PipelineCallback, MultiPipelineCallbacks]
         ] = None,
         callback_on_step_end_tensor_inputs: List[str] = ["latents"],
+        subjects = None,
         **kwargs,
     ):
         r"""
@@ -1272,6 +1273,7 @@ class StableDiffusionControlNetPipeline(
                     conditioning_scale=cond_scale,
                     guess_mode=guess_mode,
                     return_dict=False,
+                    added_cond_kwargs={"eeg_subjects": subjects}
                 )
 
                 if guess_mode and self.do_classifier_free_guidance:
