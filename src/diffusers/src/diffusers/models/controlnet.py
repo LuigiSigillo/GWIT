@@ -350,8 +350,13 @@ class ControlNetModel(ModelMixin, ConfigMixin, FromOriginalModelMixin):
         #     conditioning_channels=conditioning_channels,
         # )
         import sys
-        sys.path.append('/leonardo_scratch/fast/IscrC_GenOpt/luigi/Documents/DrEEam/src/diffusers/src/diffusers/models')
+        import os
         print("STO USANDO LA LIBRERIA GIUSTA")
+        # Get the absolute path of the current file
+        current_file_path = os.path.abspath(__file__)
+        # Get the directory containing the current file
+        current_directory = os.path.dirname(current_file_path)
+        sys.path.append(current_directory)
 
         from controlnet_conditioning_eeg import ControlNetEEGConditioningEmbedding
         self.controlnet_cond_embedding = ControlNetEEGConditioningEmbedding(
