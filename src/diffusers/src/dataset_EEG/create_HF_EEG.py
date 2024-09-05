@@ -75,34 +75,34 @@ imagenet_path = '/mnt/media/luigi/dataset/dreamdiff/imageNet_images/'
 #     dataset_test_l.append(split_test)
 #     dataset_val_l.append(split_val)
 
-subject = 0 # 0 = ALL
-dataset_train = EEGDataset(eeg_signals_path, image_transform[0], subject, encoder_name, imagenet_path=imagenet_path, only_eeg=only_eeg)
-dataset_test = EEGDataset(eeg_signals_path, image_transform[1], subject, encoder_name,  imagenet_path=imagenet_path, only_eeg=only_eeg)
-dataset_val = EEGDataset(eeg_signals_path, image_transform[1], subject, encoder_name,  imagenet_path=imagenet_path, only_eeg=only_eeg)
+# subject = 0 # 0 = ALL
+# dataset_train = EEGDataset(eeg_signals_path, image_transform[0], subject, encoder_name, imagenet_path=imagenet_path, only_eeg=only_eeg)
+# dataset_test = EEGDataset(eeg_signals_path, image_transform[1], subject, encoder_name,  imagenet_path=imagenet_path, only_eeg=only_eeg)
+# dataset_val = EEGDataset(eeg_signals_path, image_transform[1], subject, encoder_name,  imagenet_path=imagenet_path, only_eeg=only_eeg)
 
-split_train = Splitter(dataset_train, split_path=splits_path, split_num=0, split_name='train', subject=subject)
-split_test = Splitter(dataset_test, split_path=splits_path, split_num=0, split_name='test', subject=subject)
-split_val = Splitter(dataset_val, split_path=splits_path, split_num=0, split_name='val', subject=subject)
+# split_train = Splitter(dataset_train, split_path=splits_path, split_num=0, split_name='train', subject=subject)
+# split_test = Splitter(dataset_test, split_path=splits_path, split_num=0, split_name='test', subject=subject)
+# split_val = Splitter(dataset_val, split_path=splits_path, split_num=0, split_name='val', subject=subject)
 
 
-def gen_train():
-    ## or if it's an IterableDataset
-    for ex in split_train:
-        if ex is None:
-            continue
-        yield ex
-def gen_test():
-    ## or if it's an IterableDataset
-    for ex in split_test:
-        if ex is None:
-            continue
-        yield ex
-def gen_val():
-    ## or if it's an IterableDataset
-    for ex in split_val:
-        if ex is None:
-            continue
-        yield ex
+# def gen_train():
+#     ## or if it's an IterableDataset
+#     for ex in split_train:
+#         if ex is None:
+#             continue
+#         yield ex
+# def gen_test():
+#     ## or if it's an IterableDataset
+#     for ex in split_test:
+#         if ex is None:
+#             continue
+#         yield ex
+# def gen_val():
+#     ## or if it's an IterableDataset
+#     for ex in split_val:
+#         if ex is None:
+#             continue
+#         yield ex
 
 # dataset_train_l = dataset_train_l[0] + dataset_train_l[1] + dataset_train_l[2] + dataset_train_l[3] + dataset_train_l[4] + dataset_train_l[5]
 # dataset_test_l = dataset_test_l[0] + dataset_test_l[1] + dataset_test_l[2] + dataset_test_l[3] + dataset_test_l[4] + dataset_test_l[5]
@@ -136,12 +136,12 @@ def gen_val():
 
 
 from datasets import load_dataset
-data = load_dataset('luigi-s/EEG_Image_ALL_subj', split='train')
-data = load_dataset('luigi-s/EEG_Image_ALL_subj', split='validation')
-data = load_dataset('luigi-s/EEG_Image_ALL_subj', split='test')
+data = load_dataset('luigi-s/EEG_Image', split='train')
+data = load_dataset('luigi-s/EEG_Image', split='validation')
+data = load_dataset('luigi-s/EEG_Image', split='test')
 
 
-for d in data:
-    # print(d['caption'], d['label_folder'])
-    print(d['subject'])
+# for d in data:
+#     # print(d['caption'], d['label_folder'])
+#     print(d['subject'])
     
