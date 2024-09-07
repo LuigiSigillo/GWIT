@@ -71,7 +71,17 @@ class ControlNetEEGConditioningEmbedding(nn.Module):
         # #conditioning.shape must be #,128,512 but only in validation there is a 1 dimension that must be removed
         # if conditioning.shape[1] != 128:
         #     conditioning = conditioning.squeeze(1)
-        # conditioning = self.subj_layers(conditioning, subjects)
+        # Calculate the padding needed for the last dimension
+        # print(conditioning.shape)
+        if (conditioning.shape[1]> conditioning.shape[2]):
+            conditioning = conditioning.permute(0,2,1)
+        
+        padding_needed = 512 - conditioning.shape[2]
+        if padding_needed > 0:
+            # Apply the padding
+            conditioning = F.pad(conditioning, (0, padding_needed))
+        conditioning = self.subj_layers(conditioning, subjects)
+        # print(conditioning.shape)
         embedding = self.conv_in(conditioning)
         embedding = F.silu(embedding)
 
@@ -80,6 +90,7 @@ class ControlNetEEGConditioningEmbedding(nn.Module):
             embedding = F.silu(embedding)
         #test
         embedding = torch.cat([embedding]*20, dim=0) if self.x20 else embedding
+        # print(embedding.shape)
         embedding = embedding.reshape(conditioning.shape[0],
                                       self.conditioning_embedding_channels,
                                       64,
@@ -87,12 +98,15 @@ class ControlNetEEGConditioningEmbedding(nn.Module):
                                           self.conditioning_embedding_channels,
                                     embedding.shape[1] // self.conditioning_embedding_channels,
                                       embedding.shape[2])
-        embedding = embedding.permute(0, 1, 3, 2)
         # embedding = self.conv_out(embedding)
-        # Pad to (4, 320, 64, 64)
+        embedding = embedding.permute(0, 1, 3, 2)
+
         if not self.x20:
+            # Pad to (4, 320, 64, 64)
+
             padding = (0, 64-embedding.shape[3], 0, 0)  # Pad the last dimension to 64
             embedding = nn.functional.pad(embedding, padding, mode='constant', value=0)
+
         return embedding
 
 

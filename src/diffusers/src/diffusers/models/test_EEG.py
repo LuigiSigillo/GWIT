@@ -67,37 +67,89 @@ def test(CONDITIONING_CHANNELS = 128,
     embedding = nn.functional.pad(embedding, padding, mode='constant', value=0)
     return embedding
 
-embedding = test()
-print(embedding.shape)
-assert embedding.shape == torch.Size([4, 320, 64, 64])
+# embedding = test()
+# print(embedding.shape)
+# assert embedding.shape == torch.Size([4, 320, 64, 64])
+# import sys
+# sys.path.append('/home/luigi/Documents/DrEEam/src/EEGStyleGAN-ADA/EEGStyleGAN-ADA_CVPR40/')
+# from network import EEGFeatNet
+# feat_dim = 128
+# projection_dim = 128
+# num_layers = 4
+# device = "cuda"
+# eeg_model = EEGFeatNet(n_features=feat_dim, projection_dim=projection_dim, num_layers=num_layers).to(device)
+# eeg_model = torch.nn.DataParallel(eeg_model).to(device)
+# eegckpt   = '/home/luigi/Documents/DrEEam/src/EEGStyleGAN-ADA/EEGStyleGAN-ADA_CVPR40/eegbestckpt/eegfeat_lstm_all_0.9665178571428571.pth'
+# eegcheckpoint = torch.load(eegckpt, map_location=device)
+# eeg_model.load_state_dict(eegcheckpoint['model_state_dict'])
+from datasets import load_dataset
+data = load_dataset('luigi-s/EEG_Image', split='test').with_format('torch')
 
-# import torch
-# import torch.nn as nn
+i = 2048
+embedding_dim  = 256
+projection_dim = 256
+num_layers = 1
+device = "cuda"
+model_path = "/home/luigi/Documents/DrEEam/src/diffusers/src/diffusers/models/checkpoints_EEG_CLIP/clip_"
+model_path_c = model_path + str(i) + ".pth"
 
-# # Initial tensor of shape (4, 128, 512)
-# x = torch.randn(4, 128, 512)
+checkpoint = torch.load(model_path_c, map_location=device)
+import sys
+sys.path.append("/home/luigi/Documents/DrEEam/src/EEGStyleGAN-ADA/EEGClip/")
+from CLIPModel import CLIPModel
+from EEG_encoder import EEG_Encoder
+eeg_embedding = EEG_Encoder(projection_dim=projection_dim, num_layers=num_layers).to(device)
+# eegckpt   = '/home/luigi/Documents/DrEEam/src/EEGStyleGAN-ADA/EEGStyleGAN-ADA_CVPR40/eegbestckpt/eegfeat_lstm_all_0.9665178571428571.pth'
+# eeg_embedding.load_state_dict(torch.load(eegckpt))
+from torchvision.models import resnet50
+image_embedding = resnet50(pretrained=False).to(device)
+num_features = image_embedding.fc.in_features
 
-# # Define the 1D convolutional layers
-# conv1d_layers = nn.Sequential(
-#     nn.Conv1d(128, 256, kernel_size=3, stride=1, padding=1),  # (4, 256, 512)
-#     nn.ReLU(),
-#     nn.Conv1d(256, 320, kernel_size=3, stride=2, padding=1),  # (4, 320, 256)
-#     nn.ReLU(),
-#     nn.Conv1d(320, 320, kernel_size=3, stride=2, padding=1),  # (4, 320, 128)
-#     nn.ReLU(),
-#     nn.Conv1d(320, 320, kernel_size=3, stride=2, padding=1),  # (4, 320, 64)
-#     nn.ReLU()
-# )
+image_embedding.fc = nn.Sequential(
+    nn.ReLU(),
+    nn.Linear(num_features, embedding_dim, bias=False)
+)
 
-# # Apply the 1D convolutional layers
-# x = conv1d_layers(x)
+image_embedding.fc.to(device)
 
-# # Reshape to (4, 320, 64, 1)
-# x = x.view(4, 320, 64, 1)
+model = CLIPModel(eeg_embedding, image_embedding, embedding_dim, projection_dim).to(device)
+model.load_state_dict(checkpoint['model_state_dict'])
+model = model.to(device)
 
-# # Pad to (4, 320, 64, 64)
-# padding = (0, 63, 0, 0)  # Pad the last dimension to 64
-# x = nn.functional.pad(x, padding, mode='constant', value=0)
+model = model.text_encoder
 
-# # Check the final shape
-# print(x.shape)  # Should be torch.Size([4, 320, 64, 64])
+for param in model.parameters():
+    param.requires_grad = True
+
+new_layer = nn.Sequential(
+    nn.Linear(embedding_dim, 256),
+    nn.ReLU(),
+    nn.Dropout(0.1),
+    nn.Linear(256, 40),
+    nn.Softmax(dim=1)
+)
+
+model.fc = nn.Sequential(
+    model.fc,
+    new_layer
+)
+
+model = model.to(device)
+model = torch.nn.DataParallel(model).to(device)
+#checkpoint con cose di inception strane
+# model.load_state_dict(torch.load("/home/luigi/Documents/DrEEam/src/diffusers/src/diffusers/models/checkpoints_EEG_CLIP/eegfeat_all_0.6875.pth")['model_state_dict'])
+#checkpoint LSTM encoder EEG
+# model.load_state_dict(torch.load("/home/luigi/Documents/DrEEam/src/EEGStyleGAN-ADA/EEG2Feat/Triplet_LSTM/CVPR40/EXPERIMENT_29/finetune_bestckpt/eegfeat_all_0.9833920483140413.pth")['model_state_dict'])
+
+model.eval()
+
+for d in data:
+    x_val_eeg = d['conditioning_image'].unsqueeze(0).permute(0,2,1).to(device)
+    # print(x.shape)
+
+    outputs = model(x_val_eeg)
+    _, predicted = torch.max(outputs.data, 1)
+    # correct = (predicted == labels_val).sum().item()
+    # print('Accuracy of the network %d %%' % (100 * correct / 1994))
+    # val_acc = 100 * correct / 1994
+    print(predicted, d['caption'], d['label_folder'])
