@@ -17,7 +17,7 @@ img_transform_test = transforms.Compose([
 
 
 base_model_path = "stabilityai/stable-diffusion-2-1-base"
-controlnet_path = "/leonardo_scratch/fast/IscrC_GenOpt/luigi/Documents/DrEEam/src/diffusers/examples/controlnet/model_out_MULTISUB_LABEL_CAPTION/checkpoint-79500/controlnet"
+controlnet_path = "/leonardo_scratch/fast/IscrC_GenOpt/luigi/Documents/DrEEam/src/diffusers/examples/controlnet/model_out_SINGLE_SUB_FIXED_CAPTION"
 controlnet = ControlNetModel.from_pretrained(controlnet_path, torch_dtype=torch.float16)
 pipe = StableDiffusionControlNetPipeline.from_pretrained(
     base_model_path, controlnet=controlnet, torch_dtype=torch.float16
@@ -30,8 +30,9 @@ pipe.enable_xformers_memory_efficient_attention()
 # memory optimization.
 pipe.enable_model_cpu_offload()
 
-dset_name = "luigi-s/EEG_Image_ALL_subj"
-data_test = load_dataset(dset_name, split="validation").with_format(type='torch')
+dset_name = "luigi-s/EEG_Image_ALL_subj" if not "single" in controlnet_path.lower() else "luigi-s/EEG_Image"
+print(dset_name)
+data_test = load_dataset(dset_name, split="test").with_format(type='torch')
 
 # control_image = load_image("./conditioning_image_1.png")
 # prompt = "pale golden rod circle with old lace background"
@@ -53,7 +54,7 @@ def generate(data, num_samples=10, limit=4, start=0, classes_to_find=None):
         gen_img_list = []
         
         control_image = data[i]['conditioning_image'].unsqueeze(0).to(torch.float16) #eeg DEVE essere #,128,512
-        prompt = "" #"real world image views or object" #data[i]['caption'] 
+        prompt = "image" #"real world image views or object" #data[i]['caption'] 
         # generate image
         images = pipe(
             prompt, num_inference_steps=20, generator=generator, image=control_image, 
@@ -90,12 +91,12 @@ def generate_grid(data_test, num_samples=10, classes_to_find=None):
         grid_image = transforms.ToPILImage()(grid)
 
         # Save or display the image
-        grid_image.save(f"{controlnet_path}/new_grid_image_{i}.png")
+        grid_image.save(f"{controlnet_path}/new_grid_image_{i}.png" if classes_to_find is not None else f"{controlnet_path}/grid_image_{i}.png")
         # grid_image.show()
 
   
-classes_to_find = ["lantern", "airliner", "panda"]
-generate_grid(data_test, len(data_test), classes_to_find=classes_to_find)
+classes_to_find = None #["lantern", "airliner", "panda"]
+generate_grid(data_test, len(data_test)-1, classes_to_find=classes_to_find)
 
 # for i in range(len(data_test)):
 #     print(data_test[i]['subject'], data_test[i]['caption'])
