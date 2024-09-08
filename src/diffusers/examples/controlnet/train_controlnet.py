@@ -136,7 +136,7 @@ def log_validation(
         validation_image = data_val[i]['conditioning_image'].unsqueeze(0).to(accelerator.device) #eeg DEVE essere #,128,512
         #TODO metto natural image per non condizniore generaizone su label che non ho in inferenza
         #teoricmamente sempre cosi dovrebbe essere in iferenxza
-        validation_prompt = "image" #if args.caption_fixed else data_val[i]['caption'] 
+        validation_prompt = "image" if not args.caption_from_classifier else data_val[i]['caption'] 
         # print(validation_prompt, data_val[i]['label_folder'])
         validation_gt = data_val[i]['image'].unsqueeze(0).to(accelerator.device)
         subjects = data_val[i]['subject'].unsqueeze(0).to(accelerator.device) if "ALL" in args.dataset_name else torch.tensor([4]).unsqueeze(0).to(accelerator.device)
