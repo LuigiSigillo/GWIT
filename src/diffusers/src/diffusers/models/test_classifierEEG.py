@@ -190,7 +190,7 @@ model     = torch.nn.DataParallel(model).to(device)
 miner   = miners.MultiSimilarityMiner()
 model.load_state_dict(torch.load("/home/luigi/Documents/DrEEam/src/EEGStyleGAN-ADA/EEG2Feat/Triplet_LSTM/CVPR40/EXPERIMENT_29/bestckpt/eegfeat_all_0.9665178571428571.pth")['model_state_dict'])
 
-def test(epoch, model, optimizer, loss_fn, miner, test_dataloader, experiment_num):
+def test(epoch, model, knn_cv, loss_fn, miner, test_dataloader, experiment_num):
     running_loss      = []
     # eeg_featvec       = np.array([])
     image_vec         = np.array([])
@@ -201,15 +201,12 @@ def test(epoch, model, optimizer, loss_fn, miner, test_dataloader, experiment_nu
     for batch_idx, (eeg, images, labels) in enumerate(tq, start=1):
         corrects = []
         eeg, labels = eeg.to(device), labels.to(device)
-        knn_cv = KNeighborsClassifier(n_neighbors=3)
 
         with torch.no_grad():
             x_proj = model(eeg)
             hard_pairs = miner(x_proj, labels)
             loss       = loss_fn(x_proj, labels, hard_pairs)
             running_loss = running_loss + [loss.detach().cpu().numpy()]
-            knn_cv.fit(x_proj.cpu().detach().numpy(), labels.cpu().detach().numpy())
-
             # Predict the labels
             predicted_labels = knn_cv.predict(x_proj.cpu().detach().numpy())
             correct = (predicted_labels == labels.cpu().detach().numpy()).sum().item()
@@ -270,6 +267,10 @@ batch_size = 28
 x_test_eeg = []
 x_test_image = []
 label_test = []
+x_train_eeg = []
+x_train_image = []
+label_train = []
+
 base_path       = '/mnt/media/luigi/dataset/dreamdiff/'
 train_path      = 'eeg_imagenet40_cvpr_2017_raw/train/'
 validation_path = 'eeg_imagenet40_cvpr_2017_raw/val/'
@@ -290,18 +291,52 @@ for i in tqdm(natsorted(os.listdir(base_path + test_path))):
     # 	test_cluster += 1
     # label_test.append(class_labels[loaded_array[3]])
     label_test.append(loaded_array[2])
+
 x_test_eeg   = np.array(x_test_eeg)
 x_test_image = np.array(x_test_image)
 test_labels  = np.array(label_test)
-
 x_test_eeg   = torch.from_numpy(x_test_eeg).float().to(device)
 x_test_image = torch.from_numpy(x_test_image).float().to(device)
 test_labels  = torch.from_numpy(test_labels).long().to(device)
-
 test_data       = EEGDataset(x_test_eeg, x_test_image, test_labels)
 test_dataloader = torch.utils.data.DataLoader(test_data, batch_size=batch_size, shuffle=False, pin_memory=False, drop_last=False)
 
-running_test_loss, test_acc   = test(epoch, model,None, loss_fn, miner, test_dataloader, 29)
+#train data to fit knn
+for i in tqdm(natsorted(os.listdir(base_path + train_path))):
+    loaded_array = np.load(base_path + train_path + i, allow_pickle=True)
+    x_train_eeg.append(loaded_array[1].T)
+    img = cv2.resize(loaded_array[0], (224, 224))
+    # img = (cv2.cvtColor(img, cv2.COLOR_BGR2RGB) - 127.5) / 127.5
+    img = np.transpose(img, (2, 0, 1))
+    x_train_image.append(img)
+    # if loaded_array[3] not in class_labels:
+    # 	class_labels[loaded_array[3]] = label_count
+    # 	label_count += 1
+    # 	test_cluster += 1
+    # label_test.append(class_labels[loaded_array[3]])
+    label_train.append(loaded_array[2])
+x_train_eeg   = np.array(x_train_eeg)
+x_train_image = np.array(x_train_image)
+train_labels  = np.array(label_train)
+x_train_eeg   = torch.from_numpy(x_train_eeg).float().to(device)
+x_train_image = torch.from_numpy(x_train_image).float().to(device)
+train_labels  = torch.from_numpy(train_labels).long().to(device)
+train_data       = EEGDataset(x_train_eeg, x_train_image, train_labels)
+
+train_dataloader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, shuffle=False, pin_memory=False, drop_last=True)
+
+x_proj_train = torch.stack([model(batch[0].float().to(device)) for batch in train_dataloader])
+train_labels_batch = torch.stack([batch[2]for batch in train_dataloader])
+knn_cv = KNeighborsClassifier(n_neighbors=3)
+
+knn_cv.fit(x_proj_train.view(-1,128).cpu().detach().numpy(), train_labels_batch.view(-1).cpu().detach().numpy())
+# Save the model to a file
+import pickle
+
+with open('knn_model.pkl', 'wb') as f:
+    pickle.dump(knn_cv, f)
+
+# running_test_loss, test_acc   = test(epoch, model,knn_cv, loss_fn, miner, test_dataloader, 29)
 
 
 

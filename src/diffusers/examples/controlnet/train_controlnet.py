@@ -730,10 +730,13 @@ def make_train_dataset(args, tokenizer, accelerator):
     from network import EEGFeatNet
     sys.path.append(base_dir+"/diffusers/src/dataset_EEG/")
     from name_map_ID import id_to_caption
-    knn_cv = KNeighborsClassifier(n_neighbors=3)
     model     = EEGFeatNet(n_features=128, projection_dim=128, num_layers=4).to("cuda")
     model     = torch.nn.DataParallel(model).to("cuda")
+    import pickle
 
+    # Load the model from the file
+    with open(base_dir+'/diffusers/src/dataset_EEG/knn_model.pkl', 'rb') as f:
+        knn_cv = pickle.load(f)
     model.load_state_dict(torch.load(base_dir+"/EEGStyleGAN-ADA/EEG2Feat/Triplet_LSTM/CVPR40/EXPERIMENT_29/bestckpt/eegfeat_all_0.9665178571428571.pth")['model_state_dict'])
 
 
@@ -741,7 +744,6 @@ def make_train_dataset(args, tokenizer, accelerator):
         #TODO
         x_proj = model(torch.stack(eeg).permute(0,2,1).to("cuda"))
         labels = [torch.tensor(l) if not isinstance(l, torch.Tensor) else l for l in labels]
-        knn_cv.fit(x_proj.cpu().detach().numpy(), torch.stack(labels).cpu().detach().numpy())
         # Predict the labels
         predicted_labels = knn_cv.predict(x_proj.cpu().detach().numpy())
         captions = ["image of " + id_to_caption[label] for label in predicted_labels]

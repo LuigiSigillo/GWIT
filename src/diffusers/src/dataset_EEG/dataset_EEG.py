@@ -238,7 +238,7 @@ class EEGDatasetCVPR(Dataset):
 
         return {'conditioning_image': eeg, 
                 'caption': "image of a " + self.folder_label_map[labels_folder], #+ self.name_map[label.item()], 
-                'image': transforms.ToPILImage()(image),
+                'image': image, #pil image
                 'label_folder': labels_folder,
                 'label': label.item(),
                 'subject': subj.item(),

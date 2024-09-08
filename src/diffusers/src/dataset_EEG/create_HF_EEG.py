@@ -145,99 +145,103 @@
 #     # print(d['caption'], d['label_folder'])
 #     print(d['subject'])
 
-import cv2
-from natsort import natsorted
-import os
-import numpy as np
-import torch
-from tqdm import tqdm
-from dataset_EEG import EEGDatasetCVPR
+# import cv2
+# from natsort import natsorted
+# import os
+# import numpy as np
+# import torch
+# from tqdm import tqdm
+# from dataset_EEG import EEGDatasetCVPR
+# from PIL import Image
+# x_test_eeg,x_test_image,label_test, subject_test,label_folder_test = [],[],[], [], []
+# base_path       = '/mnt/media/luigi/dataset/dreamdiff/'
+# train_path      = 'eeg_imagenet40_cvpr_2017_raw/train/'
+# validation_path = 'eeg_imagenet40_cvpr_2017_raw/val/'
+# test_path       = 'eeg_imagenet40_cvpr_2017_raw/test/'
 
-x_test_eeg,x_test_image,label_test, subject_test,label_folder_test = [],[],[], [], []
-base_path       = '/mnt/media/luigi/dataset/dreamdiff/'
-train_path      = 'eeg_imagenet40_cvpr_2017_raw/train/'
-validation_path = 'eeg_imagenet40_cvpr_2017_raw/val/'
-test_path       = 'eeg_imagenet40_cvpr_2017_raw/test/'
+# datasets = []
+# device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# for path in [train_path, validation_path, test_path]:
+#     x_test_eeg,x_test_image,label_test, subject_test,label_folder_test = [],[],[], [], []
 
-datasets = []
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-for path in [validation_path, test_path]:
-    x_test_eeg,x_test_image,label_test, subject_test,label_folder_test = [],[],[], [], []
-
-    for i in tqdm(natsorted(os.listdir(base_path + path))):
-        loaded_array = np.load(base_path + path + i, allow_pickle=True)
-        x_test_eeg.append(loaded_array[1].T)
-        img = cv2.resize(loaded_array[0], (224, 224))
-        # img = (cv2.cvtColor(img, cv2.COLOR_BGR2RGB) - 127.5) / 127.5
-        img = np.transpose(img, (2, 0, 1))
-        x_test_image.append(img)
-        # if loaded_array[3] not in class_labels:
-        # 	class_labels[loaded_array[3]] = label_count
-        # 	label_count += 1
-        # 	test_cluster += 1
-        # label_test.append(class_labels[loaded_array[3]])
-        label_test.append(loaded_array[2])
-        label_folder_test.append(loaded_array[3])
-        subject_test.append(loaded_array[4])
+#     for i in tqdm(natsorted(os.listdir(base_path + path))):
+#         loaded_array = np.load(base_path + path + i, allow_pickle=True)
+#         x_test_eeg.append(loaded_array[1].T)
+#         img = cv2.resize(loaded_array[0], (224, 224))
+#         # img = (cv2.cvtColor(img, cv2.COLOR_BGR2RGB) - 127.5) / 127.5
+#         #forse a noi serve direttamente PIL per huggingface quindi no transopse
+#         # img = np.transpose(img, (2, 0, 1))
+#         img = Image.fromarray(img)
+#         x_test_image.append(img)
+#         # if loaded_array[3] not in class_labels:
+#         # 	class_labels[loaded_array[3]] = label_count
+#         # 	label_count += 1
+#         # 	test_cluster += 1
+#         # label_test.append(class_labels[loaded_array[3]])
+#         label_test.append(loaded_array[2])
+#         label_folder_test.append(loaded_array[3])
+#         subject_test.append(loaded_array[4])
         
-    x_test_eeg   = np.array(x_test_eeg)
-    x_test_image = np.array(x_test_image)
-    test_labels  = np.array(label_test)
-    subject_test = np.array(subject_test)
-    # label_folder_test = np.array(label_folder_test)
+#     x_test_eeg   = np.array(x_test_eeg)
+#     #commented for HF dataset of images
+#     # x_test_image = np.array(x_test_image)
+#     test_labels  = np.array(label_test)
+#     subject_test = np.array(subject_test)
+#     # label_folder_test = np.array(label_folder_test)
 
-    x_test_eeg   = torch.from_numpy(x_test_eeg).float()#.to(device)
-    x_test_image = torch.from_numpy(x_test_image).float()#.to(device)
-    test_labels  = torch.from_numpy(test_labels).long()#.to(device)
-    subject_test = torch.from_numpy(subject_test).long()#.to(device)
-    # label_folder_test = torch.from_numpy(label_folder_test).to(device)
+#     x_test_eeg   = torch.from_numpy(x_test_eeg).float()#.to(device)
+#     #commented for HF dataset of images
+#     # x_test_image = torch.from_numpy(x_test_image).float()#.to(device)
+#     test_labels  = torch.from_numpy(test_labels).long()#.to(device)
+#     subject_test = torch.from_numpy(subject_test).long()#.to(device)
+#     # label_folder_test = torch.from_numpy(label_folder_test).to(device)
 
-    test_data       = EEGDatasetCVPR(x_test_eeg, x_test_image, test_labels, subject_test, label_folder_test)
-    datasets.append(test_data)
+#     test_data       = EEGDatasetCVPR(x_test_eeg, x_test_image, test_labels, subject_test, label_folder_test)
+#     datasets.append(test_data)
 
 
 # dataset_train, dataset_val, dataset_test = datasets
-dataset_val, dataset_test = datasets[0], datasets[1]
-from datasets import Dataset
-from datasets import Dataset, Features, Array2D, Image, Value
+# # dataset_val, dataset_test = datasets[0], datasets[1]
+# from datasets import Dataset
+# from datasets import Dataset, Features, Array2D, Image, Value
 
-features = Features({"image": Image(), 
-                    "conditioning_image": Array2D(shape=(128, 440), dtype='float32'), 
-                    "caption": Value("string"),
-                    "label_folder": Value("string"),
-                    "label": Value("int32"),
-                    "subject": Value("int32")
-                    }
-                    )
+# features = Features({"image": Image(), 
+#                     "conditioning_image": Array2D(shape=(128, 440), dtype='float32'), 
+#                     "caption": Value("string"),
+#                     "label_folder": Value("string"),
+#                     "label": Value("int32"),
+#                     "subject": Value("int32")
+#                     }
+#                     )
 
-def gen_train():
-    ## or if it's an IterableDataset
-    for ex in dataset_train:
-        if ex is None:
-            continue
-        yield ex
-def gen_test():
-    ## or if it's an IterableDataset
-    for ex in dataset_test:
-        if ex is None:
-            continue
-        yield ex
-def gen_val():
-    ## or if it's an IterableDataset
-    for ex in dataset_val:
-        if ex is None:
-            continue
-        yield ex
+# def gen_train():
+#     ## or if it's an IterableDataset
+#     for ex in dataset_train:
+#         if ex is None:
+#             continue
+#         yield ex
+# def gen_test():
+#     ## or if it's an IterableDataset
+#     for ex in dataset_test:
+#         if ex is None:
+#             continue
+#         yield ex
+# def gen_val():
+#     ## or if it's an IterableDataset
+#     for ex in dataset_val:
+#         if ex is None:
+#             continue
+#         yield ex
 
 
 # dset_train = Dataset.from_generator(gen_train, split='train',features=features).with_format(type='torch')
 # dset_train.push_to_hub("luigi-s/EEG_Image_CVPR_ALL_subj", private=True)
 
-dset_test = Dataset.from_generator(gen_test, split='test', features=features).with_format(type='torch')
-dset_test.push_to_hub("luigi-s/EEG_Image_CVPR_ALL_subj", private=True)
+# dset_test = Dataset.from_generator(gen_test, split='test', features=features).with_format(type='torch')
+# dset_test.push_to_hub("luigi-s/EEG_Image_CVPR_ALL_subj", private=True)
 
-dset_val = Dataset.from_generator(gen_val, split='validation', features=features).with_format(type='torch')
-dset_val.push_to_hub("luigi-s/EEG_Image_CVPR_ALL_subj", private=True)
+# dset_val = Dataset.from_generator(gen_val, split='validation', features=features).with_format(type='torch')
+# dset_val.push_to_hub("luigi-s/EEG_Image_CVPR_ALL_subj", private=True)
 
 # print("TIPI dataset classico")
 # # print(type(dataset_val[20]['conditioning_image']))
@@ -254,3 +258,18 @@ dset_val.push_to_hub("luigi-s/EEG_Image_CVPR_ALL_subj", private=True)
 # print(dset_test[10]['caption'], dset_test[10]['label_folder'])
 
 # # # print(type(dset_val[0]['subject']))
+
+
+from datasets import load_dataset
+from torchvision import transforms
+# Define the transformation
+to_pil = transforms.ToPILImage()
+
+data_raw = load_dataset('luigi-s/EEG_Image_CVPR_ALL_subj', split='test').with_format(type='torch')
+data = load_dataset('luigi-s/EEG_Image_ALL_subj', split='test').with_format(type='torch')
+
+# data = load_dataset('luigi-s/EEG_Image_CVPR_ALL_subj', split='validation')
+# data = load_dataset('luigi-s/EEG_Image_CVPR_ALL_subj', split='test')
+image_data_raw = data_raw[0]['image']
+
+image_data = data[0]['image']
