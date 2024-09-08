@@ -138,7 +138,7 @@ def log_validation(
         validation_image = data_val[i]['conditioning_image'].unsqueeze(0).to(accelerator.device) #eeg DEVE essere #,128,512
         #TODO metto natural image per non condizniore generaizone su label che non ho in inferenza
         #teoricmamente sempre cosi dovrebbe essere in iferenxza
-        validation_prompt = "image" if not args.caption_from_classifier else data_val[i]['caption'] 
+        validation_prompt = args.caption_fixed_string if not args.caption_from_classifier else data_val[i]['caption'] 
         # print(validation_prompt, data_val[i]['label_folder'])
         validation_gt = data_val[i]['image'].unsqueeze(0).to(accelerator.device)
         subjects = data_val[i]['subject'].unsqueeze(0).to(accelerator.device) if "ALL" in args.dataset_name else torch.tensor([4]).unsqueeze(0).to(accelerator.device)
@@ -594,6 +594,14 @@ def parse_args(input_args=None):
             "0 means all subjects, otherwise the subject number to be used for training."
         ),
     )
+    parser.add_argument(
+        "--caption_fixed_string",
+        type=str,
+        default="image",
+        help=(
+            "The fixed caption to be used for prompt training."
+        ),
+    )
 
     if input_args is not None:
         args = parser.parse_args(input_args)
@@ -660,7 +668,7 @@ def make_train_dataset(args, tokenizer, accelerator):
     # Preprocessing the datasets.
     # We need to tokenize inputs and targets.
     if args.subject_num != 0:
-        dataset = dataset.filter(lambda x: x['subject'].item() == args.subject_num)
+        dataset = dataset.filter(lambda x: x['subject'] == args.subject_num)
 
     column_names = dataset["train"].column_names
 
@@ -777,7 +785,7 @@ def make_train_dataset(args, tokenizer, accelerator):
 
         # TO make fixed the captions for EEG
         if args.caption_fixed:
-            examples[caption_column] = len(examples[caption_column])*["image"]
+            examples[caption_column] = len(examples[caption_column])*[args.caption_fixed_string]
         if args.caption_from_classifier:
             examples[caption_column] = get_caption_from_classifier(examples["conditioning_pixel_values"], examples["label"])
         examples["input_ids"] = tokenize_captions(examples)
