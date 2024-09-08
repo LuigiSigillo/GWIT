@@ -128,6 +128,8 @@ def log_validation(
     inference_ctx = contextlib.nullcontext() if is_final_validation else torch.autocast("cuda")
     
     data_val = load_dataset(args.dataset_name, split="validation").with_format(type='torch')
+    if args.subject_num != 0:
+        data_val = data_val.filter(lambda x: x['subject'].item() == args.subject_num)
 
     # for validation_prompt, validation_image in zip(validation_prompts, validation_images):
     for i in range(0, 10):
@@ -584,6 +586,15 @@ def parse_args(input_args=None):
         action="store_true",
         help="Whether or not to use a fixed caption such as image and not the label",
     )
+    parser.add_argument(
+        "--subject_num",
+        type=int,
+        default=0,
+        help=(
+            "0 means all subjects, otherwise the subject number to be used for training."
+        ),
+    )
+
     if input_args is not None:
         args = parser.parse_args(input_args)
     else:
@@ -648,6 +659,9 @@ def make_train_dataset(args, tokenizer, accelerator):
 
     # Preprocessing the datasets.
     # We need to tokenize inputs and targets.
+    if args.subject_num != 0:
+        dataset = dataset.filter(lambda x: x['subject'].item() == args.subject_num)
+
     column_names = dataset["train"].column_names
 
     # 6. Get the column names for input/target.
@@ -717,15 +731,14 @@ def make_train_dataset(args, tokenizer, accelerator):
     #     ]
     # )
     import sys
-    from sklearn.neighbors import KNeighborsClassifier
     # Get the current file path and directory
     current_file_path = os.path.abspath(__file__)
     current_dir = os.path.dirname(current_file_path)
 
     # Go up three levels from the current directory
     base_dir = os.path.dirname(os.path.dirname(os.path.dirname(current_dir)))
-    print(base_dir)
-    print(base_dir+"/EEGStyleGAN-ADA/EEG2Feat/Triplet_LSTM/CVPR40")
+    # print(base_dir)
+    # print(base_dir+"/EEGStyleGAN-ADA/EEG2Feat/Triplet_LSTM/CVPR40")
     sys.path.append(base_dir+"/EEGStyleGAN-ADA/EEG2Feat/Triplet_LSTM/CVPR40")
     from network import EEGFeatNet
     sys.path.append(base_dir+"/diffusers/src/dataset_EEG/")
