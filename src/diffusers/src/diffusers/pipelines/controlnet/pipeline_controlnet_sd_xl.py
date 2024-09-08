@@ -1303,18 +1303,19 @@ class StableDiffusionXLControlNetPipeline(
 
         # 4. Prepare image
         if isinstance(controlnet, ControlNetModel):
-            image = self.prepare_image(
-                image=image,
-                width=width,
-                height=height,
-                batch_size=batch_size * num_images_per_prompt,
-                num_images_per_prompt=num_images_per_prompt,
-                device=device,
-                dtype=controlnet.dtype,
-                do_classifier_free_guidance=self.do_classifier_free_guidance,
-                guess_mode=guess_mode,
-            )
-            height, width = image.shape[-2:]
+            # image = self.prepare_image(
+            #     image=image,
+            #     width=width,
+            #     height=height,
+            #     batch_size=batch_size * num_images_per_prompt,
+            #     num_images_per_prompt=num_images_per_prompt,
+            #     device=device,
+            #     dtype=controlnet.dtype,
+            #     do_classifier_free_guidance=self.do_classifier_free_guidance,
+            #     guess_mode=guess_mode,
+            # )
+            # height, width = image.shape[-2:]
+            height, width = 512,512
         elif isinstance(controlnet, MultiControlNetModel):
             images = []
 

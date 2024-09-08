@@ -132,21 +132,33 @@ def log_validation(vae, unet, controlnet, args, accelerator, weight_dtype, step,
     else:
         autocast_ctx = torch.autocast(accelerator.device.type)
 
-    for validation_prompt, validation_image in zip(validation_prompts, validation_images):
-        validation_image = Image.open(validation_image).convert("RGB")
-        validation_image = validation_image.resize((args.resolution, args.resolution))
+    
 
+    data_val = load_dataset(args.dataset_name, split="validation").with_format(type='torch')
+    if args.subject_num != 0:
+        data_val = data_val.filter(lambda x: x['subject'].item() == args.subject_num)
+    # for validation_prompt, validation_image in zip(validation_prompts, validation_images):
+    for i in range(0, 10):
+        # validation_image = Image.open(validation_image).convert("RGB")
+        #conditioning image sarebbe
+        validation_image = data_val[i]['conditioning_image'].unsqueeze(0).to(accelerator.device) #eeg DEVE essere #,128,512
+        #TODO metto natural image per non condizniore generaizone su label che non ho in inferenza
+        #teoricmamente sempre cosi dovrebbe essere in iferenxza
+        validation_prompt = "image" #if args.caption_fixed else data_val[i]['caption'] 
+        # print(validation_prompt, data_val[i]['label_folder'])
+        validation_gt = data_val[i]['image'].unsqueeze(0).to(accelerator.device)
+        subjects = data_val[i]['subject'].unsqueeze(0).to(accelerator.device) if "ALL" in args.dataset_name else torch.tensor([4]).unsqueeze(0).to(accelerator.device)
         images = []
 
         for _ in range(args.num_validation_images):
             with autocast_ctx:
                 image = pipeline(
-                    prompt=validation_prompt, image=validation_image, num_inference_steps=20, generator=generator
+                    prompt=validation_prompt, image=validation_image, num_inference_steps=20, generator=generator, subjects = subjects
                 ).images[0]
             images.append(image)
 
         image_logs.append(
-            {"validation_image": validation_image, "images": images, "validation_prompt": validation_prompt}
+            {"validation_image": validation_gt, "images": images, "validation_prompt": validation_prompt}
         )
 
     tracker_key = "test" if is_final_validation else "validation"
@@ -175,7 +187,7 @@ def log_validation(vae, unet, controlnet, args, accelerator, weight_dtype, step,
                 validation_prompt = log["validation_prompt"]
                 validation_image = log["validation_image"]
 
-                formatted_images.append(wandb.Image(validation_image, caption="Controlnet conditioning"))
+                formatted_images.append(wandb.Image(validation_image, caption="Ground truth"))
 
                 for image in images:
                     image = wandb.Image(image, caption=validation_prompt)
@@ -589,7 +601,32 @@ def parse_args(input_args=None):
             " more information see https://huggingface.co/docs/accelerate/v0.17.0/en/package_reference/accelerator#accelerate.Accelerator"
         ),
     )
-
+    parser.add_argument(
+        "--caption_fixed",
+        action="store_true",
+        help="Whether or not to use a fixed caption such as image and not the label",
+    )
+    parser.add_argument(
+        "--caption_from_classifier",
+        action="store_true",
+        help="Whether or not to use a fixed caption such as image and not the label",
+    )
+    parser.add_argument(
+        "--subject_num",
+        type=int,
+        default=0,
+        help=(
+            "0 means all subjects, otherwise the subject number to be used for training."
+        ),
+    )
+    parser.add_argument(
+        "--caption_fixed_string",
+        type=str,
+        default="image",
+        help=(
+            "The fixed caption to be used for prompt training."
+        ),
+    )
     if input_args is not None:
         args = parser.parse_args(input_args)
     else:
@@ -656,6 +693,8 @@ def get_train_dataset(args, accelerator):
     # We need to tokenize inputs and targets.
     column_names = dataset["train"].column_names
 
+    if args.subject_num != 0:
+        dataset = dataset.filter(lambda x: x['subject'] == args.subject_num)
     # 6. Get the column names for input/target.
     if args.image_column is None:
         image_column = column_names[0]
@@ -752,18 +791,58 @@ def prepare_train_dataset(dataset, accelerator):
             transforms.ToTensor(),
         ]
     )
+    import sys
+    # Get the current file path and directory
+    current_file_path = os.path.abspath(__file__)
+    current_dir = os.path.dirname(current_file_path)
 
+    # Go up three levels from the current directory
+    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(current_dir)))
+    # print(base_dir)
+    # print(base_dir+"/EEGStyleGAN-ADA/EEG2Feat/Triplet_LSTM/CVPR40")
+    sys.path.append(base_dir+"/EEGStyleGAN-ADA/EEG2Feat/Triplet_LSTM/CVPR40")
+    from network import EEGFeatNet
+    sys.path.append(base_dir+"/diffusers/src/dataset_EEG/")
+    from name_map_ID import id_to_caption
+    model     = EEGFeatNet(n_features=128, projection_dim=128, num_layers=4).to("cuda")
+    model     = torch.nn.DataParallel(model).to("cuda")
+    import pickle
+
+    # Load the model from the file
+    with open(base_dir+'/diffusers/src/dataset_EEG/knn_model.pkl', 'rb') as f:
+        knn_cv = pickle.load(f)
+    model.load_state_dict(torch.load(base_dir+"/EEGStyleGAN-ADA/EEG2Feat/Triplet_LSTM/CVPR40/EXPERIMENT_29/bestckpt/eegfeat_all_0.9665178571428571.pth")['model_state_dict'])
+
+
+    def get_caption_from_classifier(eeg, labels):
+        #TODO
+        x_proj = model(torch.stack(eeg).permute(0,2,1).to("cuda"))
+        labels = [torch.tensor(l) if not isinstance(l, torch.Tensor) else l for l in labels]
+        # Predict the labels
+        predicted_labels = knn_cv.predict(x_proj.cpu().detach().numpy())
+        captions = ["image of " + id_to_caption[label] for label in predicted_labels]
+        return captions
+    
     def preprocess_train(examples):
+        # print(examples[image_column][0])
         images = [image.convert("RGB") for image in examples[args.image_column]]
         images = [image_transforms(image) for image in images]
 
-        # conditioning_images = [image.convert("RGB") for image in examples[args.conditioning_image_column]]
+        #TEST
+        # conditioning_images = [image.convert("RGB") for image in examples[conditioning_image_column]]
         # conditioning_images = [conditioning_image_transforms(image) for image in conditioning_images]
         #EEG
         conditioning_images = [torch.tensor(image) for image in examples[args.conditioning_image_column]] #EEG
 
         examples["pixel_values"] = images
         examples["conditioning_pixel_values"] = conditioning_images
+
+        # TO make fixed the captions for EEG
+        if args.caption_fixed:
+            examples[args.caption_column] = len(examples[args.caption_column])*[args.caption_fixed_string]
+        if args.caption_from_classifier:
+            examples[args.caption_column] = get_caption_from_classifier(examples["conditioning_pixel_values"], examples["label"])
+
 
         return examples
 
@@ -784,12 +863,17 @@ def collate_fn(examples):
 
     add_text_embeds = torch.stack([torch.tensor(example["text_embeds"]) for example in examples])
     add_time_ids = torch.stack([torch.tensor(example["time_ids"]) for example in examples])
-
+    if "ALL" in args.dataset_name:
+        # print([example["subject"] for example in examples])
+        # Convert each integer subject to a tensor before stacking
+        subjects = torch.stack([torch.tensor(example["subject"]) for example in examples])
     return {
         "pixel_values": pixel_values,
         "conditioning_pixel_values": conditioning_pixel_values,
         "prompt_ids": prompt_ids,
         "unet_added_conditions": {"text_embeds": add_text_embeds, "time_ids": add_time_ids},
+        "eeg_subjects": subjects  if "ALL" in args.dataset_name else torch.tensor([4]*prompt_ids.shape[0]),
+
     }
 
 
@@ -1216,13 +1300,18 @@ def main(args):
 
                 # ControlNet conditioning.
                 controlnet_image = batch["conditioning_pixel_values"].to(dtype=weight_dtype)
+                
+                added_cond_kwargs_dict = batch["unet_added_conditions"]
+                added_cond_kwargs_dict['eeg_subjects']= batch["eeg_subjects"]
+
                 down_block_res_samples, mid_block_res_sample = controlnet(
                     noisy_latents,
                     timesteps,
                     encoder_hidden_states=batch["prompt_ids"],
-                    added_cond_kwargs=batch["unet_added_conditions"],
+                    added_cond_kwargs=added_cond_kwargs_dict,
                     controlnet_cond=controlnet_image,
                     return_dict=False,
+
                 )
 
                 # Predict the noise residual

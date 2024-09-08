@@ -48,6 +48,7 @@ class ControlNetEEGConditioningEmbedding(nn.Module):
         super().__init__()
         #TEST
         self.x20 = x20
+        self.is_sd_XL = True
         block_strides = (1,1,1,1) if x20 else block_strides
         block_out_channels = (128,128,128,128) if x20 else block_out_channels
 
@@ -93,8 +94,8 @@ class ControlNetEEGConditioningEmbedding(nn.Module):
         # print(embedding.shape)
         embedding = embedding.reshape(conditioning.shape[0],
                                       self.conditioning_embedding_channels,
-                                      64,
-                                      64) if self.x20 else  embedding.reshape(embedding.shape[0],
+                                      128 if self.is_sd_XL else 64,
+                                      128 if self.is_sd_XL else 64) if self.x20 else  embedding.reshape(embedding.shape[0],
                                           self.conditioning_embedding_channels,
                                     embedding.shape[1] // self.conditioning_embedding_channels,
                                       embedding.shape[2])
@@ -104,7 +105,7 @@ class ControlNetEEGConditioningEmbedding(nn.Module):
         if not self.x20:
             # Pad to (4, 320, 64, 64)
 
-            padding = (0, 64-embedding.shape[3], 0, 0)  # Pad the last dimension to 64
+            padding = (0, (128 if self.is_sd_XL else 64)-embedding.shape[3], 0, 0)  # Pad the last dimension to 64
             embedding = nn.functional.pad(embedding, padding, mode='constant', value=0)
 
         return embedding
