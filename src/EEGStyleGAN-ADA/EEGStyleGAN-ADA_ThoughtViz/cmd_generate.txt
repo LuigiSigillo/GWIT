@@ -1,0 +1,1 @@
+python generate.py --network out/00000-EEGImageThoughtViz-cond-mirror-cifar-bgcfnc/network-snapshot-004032.pkl --outdir generated_images/3_seed --seeds 0-10 --data=../dataset/thoughtviz/test/*/*

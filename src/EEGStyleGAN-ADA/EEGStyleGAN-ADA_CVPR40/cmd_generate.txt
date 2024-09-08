@@ -1,0 +1,1 @@
+python generate.py --network out/00001-EEGImageCVPR40-cond-mirror-cifar-batch64-bgcfnc/network-snapshot-005443.pkl --outdir generated_images/4 --seeds 0-10 --data=../dataset/eeg_imagenet40_cvpr_2017_raw/test/*

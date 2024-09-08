@@ -1,0 +1,16 @@
+# conda create -n to1.7 anaconda python=3.8
+# conda activate to1.7
+# pip install torch==1.7.0+cu110 torchvision==0.8.1+cu110 torchaudio==0.7.0 -f https://download.pytorch.org/whl/torch_stable.html
+# pip install opencv-python==4.5.4.58 opencv-contrib-python==4.5.4.58
+# pip install natsort
+
+export LD_LIBRARY_PATH=/home/cvig/anaconda3/lib
+
+# Inception Score
+python calc_metrics.py --metrics=is50k --network=out/00000-EEGImageCVPR40-cond-mirror-cifar-bgcfnc/network-snapshot-005322.pkl --data=../dataset/eeg_imagenet40_cvpr_2017_raw/test/* --mirror=1
+
+# FID Score
+python calc_metrics.py --metrics=fid50k_full --network=out/00000-EEGImageCVPR40-cond-mirror-cifar-bgcfnc/network-snapshot-005322.pkl --data=../dataset/eeg_imagenet40_cvpr_2017_raw/test/* --mirror=1
+
+# KID Score
+python calc_metrics.py --metrics=kid50k_full --network=out/00000-EEGImageCVPR40-cond-mirror-cifar-bgcfnc/network-snapshot-005322.pkl --data=../dataset/eeg_imagenet40_cvpr_2017_raw/test/* --mirror=1

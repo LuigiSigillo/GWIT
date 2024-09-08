@@ -1,0 +1,3 @@
+python calc_metrics.py --metrics=is50k --network=out/00000-EEGImageCVPR40-cond-mirror-cifar-bgcfnc/network-snapshot-005443.pkl --data=../dataset/eeg_imagenet40_cvpr_2017_raw/test/* --mirror=1
+python calc_metrics.py --metrics=fid50k_full --network=out/00000-EEGImageCVPR40-cond-mirror-cifar-bgcfnc/network-snapshot-005443.pkl --data=../dataset/eeg_imagenet40_cvpr_2017_raw/test/* --mirror=1
+python calc_metrics.py --metrics=kid50k_full --network=out/00000-EEGImageCVPR40-cond-mirror-cifar-bgcfnc/network-snapshot-005443.pkl --data=../dataset/eeg_imagenet40_cvpr_2017_raw/test/* --mirror=1

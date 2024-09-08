@@ -231,3 +231,16 @@ fabric.properties
 # Android studio 3.1+ serialized cache file
 .idea/caches/build_file_checksums.ser
 dataset/block_splits_by_image_all.pth
+src/diffusers/src/diffusers/models/checkpoints_EEG_CLIP/clip_32.pth
+src/diffusers/src/diffusers/models/checkpoints_EEG_CLIP/clip_64.pth
+src/diffusers/src/diffusers/models/checkpoints_EEG_CLIP/clip_128.pth
+src/diffusers/src/diffusers/models/checkpoints_EEG_CLIP/clip_256.pth
+src/diffusers/src/diffusers/models/checkpoints_EEG_CLIP/clip_512.pth
+src/diffusers/src/diffusers/models/checkpoints_EEG_CLIP/clip_1024.pth
+src/diffusers/src/diffusers/models/checkpoints_EEG_CLIP/clip_1536.pth
+src/diffusers/src/diffusers/models/checkpoints_EEG_CLIP/clip_2048.pth
+src/diffusers/src/diffusers/models/checkpoints_EEG_CLIP/eegfeat_all_0.6875.pth
+src/EEGStyleGAN-ADA/EEG2Feat/Triplet_LSTM/Object/EXPERIMENT_1/bestckpt/eegfeat_all_0.4037109375.pth
+src/EEGStyleGAN-ADA/EEG2Feat/Triplet_LSTM/Object/EXPERIMENT_1/finetune_bestckpt/eegfeat_all_0.4055876685934489.pth
+src/EEGStyleGAN-ADA/EEG2Feat/Triplet_LSTM/Thoughtviz/EXPERIMENT_1/finetune_bestckpt/eegfeat_all_0.7418323863636364.pth
+src/EEGStyleGAN-ADA/EEG2Feat/Triplet_LSTM/CVPR40/EXPERIMENT_29/finetune_bestckpt/eegfeat_all_0.9833920483140413.pth

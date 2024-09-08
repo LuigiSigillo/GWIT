@@ -1,0 +1,1 @@
+python train.py --outdir=./out/ --data=../dataset/thoughtviz/train/*/* --cond=1 --gpus=1 --cfg=cifar --mirror=1 --augpipe=bgcfnc

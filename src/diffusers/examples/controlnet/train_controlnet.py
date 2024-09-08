@@ -579,7 +579,11 @@ def parse_args(input_args=None):
         action="store_true",
         help="Whether or not to use a fixed caption such as image and not the label",
     )
-
+    parser.add_argument(
+        "--caption_from_classifier",
+        action="store_true",
+        help="Whether or not to use a fixed caption such as image and not the label",
+    )
     if input_args is not None:
         args = parser.parse_args(input_args)
     else:
@@ -712,7 +716,36 @@ def make_train_dataset(args, tokenizer, accelerator):
     #         transforms.ToTensor(),
     #     ]
     # )
+    import sys
+    from sklearn.neighbors import KNeighborsClassifier
+    # Get the current file path and directory
+    current_file_path = os.path.abspath(__file__)
+    current_dir = os.path.dirname(current_file_path)
 
+    # Go up three levels from the current directory
+    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(current_dir)))
+    print(base_dir)
+    print(base_dir+"/EEGStyleGAN-ADA/EEG2Feat/Triplet_LSTM/CVPR40")
+    sys.path.append(base_dir+"/EEGStyleGAN-ADA/EEG2Feat/Triplet_LSTM/CVPR40")
+    from network import EEGFeatNet
+    sys.path.append(base_dir+"/diffusers/src/dataset_EEG/")
+    from name_map_ID import id_to_caption
+    knn_cv = KNeighborsClassifier(n_neighbors=3)
+    model     = EEGFeatNet(n_features=128, projection_dim=128, num_layers=4).to("cuda")
+    model     = torch.nn.DataParallel(model).to("cuda")
+
+    model.load_state_dict(torch.load(base_dir+"/EEGStyleGAN-ADA/EEG2Feat/Triplet_LSTM/CVPR40/EXPERIMENT_29/bestckpt/eegfeat_all_0.9665178571428571.pth")['model_state_dict'])
+
+
+    def get_caption_from_classifier(eeg, labels):
+        #TODO
+        x_proj = model(torch.stack(eeg).permute(0,2,1).to("cuda"))
+        labels = [torch.tensor(l) if not isinstance(l, torch.Tensor) else l for l in labels]
+        knn_cv.fit(x_proj.cpu().detach().numpy(), torch.stack(labels).cpu().detach().numpy())
+        # Predict the labels
+        predicted_labels = knn_cv.predict(x_proj.cpu().detach().numpy())
+        captions = ["image of " + id_to_caption[label] for label in predicted_labels]
+        return captions
     def preprocess_train(examples):
         # print(examples[image_column][0])
         images = [image.convert("RGB") for image in examples[image_column]]
@@ -730,7 +763,8 @@ def make_train_dataset(args, tokenizer, accelerator):
         # TO make fixed the captions for EEG
         if args.caption_fixed:
             examples[caption_column] = len(examples[caption_column])*["image"]
-
+        if args.caption_from_classifier:
+            examples[caption_column] = get_caption_from_classifier(examples["conditioning_pixel_values"], examples["label"])
         examples["input_ids"] = tokenize_captions(examples)
 
 
