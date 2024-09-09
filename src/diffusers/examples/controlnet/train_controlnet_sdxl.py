@@ -1156,7 +1156,7 @@ def main(args):
         # fingerprint used by the cache for the other processes to load the result
         # details: https://github.com/huggingface/diffusers/pull/4038#discussion_r1266078401
         new_fingerprint = Hasher.hash(args)
-        train_dataset = train_dataset.map(compute_embeddings_fn, batched=True, new_fingerprint=new_fingerprint)
+        train_dataset = train_dataset.map(compute_embeddings_fn, batched=True, new_fingerprint=new_fingerprint, cache_file_name="/leonardo_scratch/fast/IscrC_GenOpt/luigi/Documents/embeddings_cache.arrow")
 
     del text_encoders, tokenizers
     gc.collect()

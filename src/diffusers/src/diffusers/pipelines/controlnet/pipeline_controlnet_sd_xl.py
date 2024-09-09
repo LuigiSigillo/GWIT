@@ -1317,7 +1317,7 @@ class StableDiffusionXLControlNetPipeline(
             #     guess_mode=guess_mode,
             # )
             # height, width = image.shape[-2:]
-            height, width = 512,512
+            height, width = 1024,1024 #512,512
         elif isinstance(controlnet, MultiControlNetModel):
             images = []
 
@@ -1479,6 +1479,7 @@ class StableDiffusionXLControlNetPipeline(
                     cond_scale = controlnet_cond_scale * controlnet_keep[i]
 
                 controlnet_added_cond_kwargs['eeg_subjects'] = subjects
+                
                 down_block_res_samples, mid_block_res_sample = self.controlnet(
                     control_model_input,
                     t,
@@ -1500,6 +1501,8 @@ class StableDiffusionXLControlNetPipeline(
                 if ip_adapter_image is not None or ip_adapter_image_embeds is not None:
                     added_cond_kwargs["image_embeds"] = image_embeds
 
+                # import pdb
+                # pdb.set_trace()
                 # predict the noise residual
                 noise_pred = self.unet(
                     latent_model_input,
@@ -1512,14 +1515,17 @@ class StableDiffusionXLControlNetPipeline(
                     added_cond_kwargs=added_cond_kwargs,
                     return_dict=False,
                 )[0]
+                # pdb.set_trace()
 
                 # perform guidance
                 if self.do_classifier_free_guidance:
                     noise_pred_uncond, noise_pred_text = noise_pred.chunk(2)
                     noise_pred = noise_pred_uncond + guidance_scale * (noise_pred_text - noise_pred_uncond)
+                # pdb.set_trace()
 
                 # compute the previous noisy sample x_t -> x_t-1
                 latents = self.scheduler.step(noise_pred, t, latents, **extra_step_kwargs, return_dict=False)[0]
+                # pdb.set_trace()
 
                 if callback_on_step_end is not None:
                     callback_kwargs = {}
@@ -1567,7 +1573,10 @@ class StableDiffusionXLControlNetPipeline(
             else:
                 latents = latents / self.vae.config.scaling_factor
 
+            # pdb.set_trace()
+
             image = self.vae.decode(latents, return_dict=False)[0]
+            # pdb.set_trace()
 
             # cast back to fp16 if needed
             if needs_upcasting:
@@ -1579,7 +1588,9 @@ class StableDiffusionXLControlNetPipeline(
             # apply watermark if available
             if self.watermark is not None:
                 image = self.watermark.apply_watermark(image)
-
+            # print(type(image))
+            # print(image.shape)
+            # print(image)
             image = self.image_processor.postprocess(image, output_type=output_type)
 
         # Offload all models

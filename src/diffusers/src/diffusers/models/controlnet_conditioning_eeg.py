@@ -43,12 +43,13 @@ class ControlNetEEGConditioningEmbedding(nn.Module):
         block_out_channels: Tuple[int, ...] = (320, 640, 1280, 2560),
         block_strides: Tuple[int, ...] = (5, 2, 2, 2),
         n_subjects=7,
-        x20=False #TODO: remove this and handle from outside
+        x20=False,
+        is_sd_XL=True,#TODO: remove this and handle from outside
     ):
         super().__init__()
         #TEST
         self.x20 = x20
-        self.is_sd_XL = True
+        self.is_sd_XL = is_sd_XL
         block_strides = (1,1,1,1) if x20 else block_strides
         block_out_channels = (128,128,128,128) if x20 else block_out_channels
 
@@ -81,6 +82,7 @@ class ControlNetEEGConditioningEmbedding(nn.Module):
         if padding_needed > 0:
             # Apply the padding
             conditioning = F.pad(conditioning, (0, padding_needed))
+        # print("egg subj forward", subjects, subjects.shape)
         conditioning = self.subj_layers(conditioning, subjects)
         # print(conditioning.shape)
         embedding = self.conv_in(conditioning)
