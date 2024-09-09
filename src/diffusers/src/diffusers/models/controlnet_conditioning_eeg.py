@@ -101,11 +101,11 @@ class ControlNetEEGConditioningEmbedding(nn.Module):
                                       embedding.shape[2])
         # embedding = self.conv_out(embedding)
         embedding = embedding.permute(0, 1, 3, 2)
-
+        # print(embedding.shape)
         if not self.x20:
             # Pad to (4, 320, 64, 64)
-
-            padding = (0, (128 if self.is_sd_XL else 64)-embedding.shape[3], 0, 0)  # Pad the last dimension to 64
+            padding = (0, 120, 0, 64) if self.is_sd_XL else (0, 64-embedding.shape[3], 0, 0)# This pads the right side by 120 and the bottom by 64
+            # padding = (0, (128 if self.is_sd_XL else 64)-embedding.shape[3], 0, 0)  # Pad the last dimension to 64
             embedding = nn.functional.pad(embedding, padding, mode='constant', value=0)
 
         return embedding

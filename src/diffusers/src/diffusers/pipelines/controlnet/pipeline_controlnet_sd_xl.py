@@ -1034,6 +1034,8 @@ class StableDiffusionXLControlNetPipeline(
             Union[Callable[[int, int, Dict], None], PipelineCallback, MultiPipelineCallbacks]
         ] = None,
         callback_on_step_end_tensor_inputs: List[str] = ["latents"],
+        subjects = None,
+
         **kwargs,
     ):
         r"""
@@ -1476,6 +1478,7 @@ class StableDiffusionXLControlNetPipeline(
                         controlnet_cond_scale = controlnet_cond_scale[0]
                     cond_scale = controlnet_cond_scale * controlnet_keep[i]
 
+                controlnet_added_cond_kwargs['eeg_subjects'] = subjects
                 down_block_res_samples, mid_block_res_sample = self.controlnet(
                     control_model_input,
                     t,
