@@ -10,10 +10,10 @@ import os
 from scipy.stats import entropy
 import argparse
 
-# python evaluate_IS.py --input_image_dir /mnt/media/luigi/model_out_CVPR_MULTISUB_FIXED_CAPTION/controlnet/generated 
+# python evaluate_IS.py --root /mnt/media/luigi/model_out_CVPR_MULTISUB_FIXED_CAPTION/controlnet/generated 
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-parser.add_argument('--input_image_dir', type=str, default='picture-gene')
+parser.add_argument('--root', type=str, default='picture-gene')
 parser.add_argument('--batch_size', type=int, default=32)
 parser.add_argument('--device', type=str, choices=["cuda:0", "cpu"], default="cuda:0")
 args = parser.parse_args()
@@ -87,7 +87,7 @@ def inception_score(batch_size=args.batch_size, resize=True):
     return inception_score
 
 
-def readDir(dirPath=args.input_image_dir):
+def readDir(dirPath=args.root):
     allFiles = []
     if os.path.isdir(dirPath):
         fileList = os.listdir(dirPath)

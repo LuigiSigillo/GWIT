@@ -43,8 +43,8 @@ class ControlNetEEGConditioningEmbedding(nn.Module):
         block_out_channels: Tuple[int, ...] = (320, 640, 1280, 2560),
         block_strides: Tuple[int, ...] = (5, 2, 2, 2),
         n_subjects=7,
-        x20=False,
-        is_sd_XL=True,#TODO: remove this and handle from outside
+        x20=False, #TODO: remove this and handle from outside
+        is_sd_XL=False,#TODO: remove this and handle from outside
     ):
         super().__init__()
         #TEST

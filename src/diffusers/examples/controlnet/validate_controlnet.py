@@ -8,11 +8,22 @@ from torchvision.utils import make_grid
 import numpy as np
 from PIL import Image
 import torchvision.transforms as transforms
+import os
+from tqdm import tqdm
 
-
-def generate(data, num_samples=10, limit=4, start=0, classes_to_find=None, single_image_for_eval=False):
+def generate(data, num_samples=10, limit=4, start=0, classes_to_find=None, single_image_for_eval=False, 
+             controlnet_path=None):
     all_samples = []
-    for i in range(start, num_samples+start):
+    #check if folder exists
+    if not os.path.exists(f"{controlnet_path}/generated"):
+        os.makedirs(f"{controlnet_path}/generated",exist_ok=True)
+        os.makedirs(f"{controlnet_path}/ground_truth",exist_ok=True)
+    if classes_to_find is not None:
+        os.makedirs(f"{controlnet_path}/paper/", exist_ok=True)
+        os.makedirs(f"{controlnet_path}/paper/generated",exist_ok=True)
+        os.makedirs(f"{controlnet_path}/paper/ground_truth",exist_ok=True)
+        controlnet_path = f"{controlnet_path}/paper"
+    for i in tqdm(range(start, num_samples+start)):
         found = False
         if classes_to_find is not None:
             for c in classes_to_find:
@@ -26,7 +37,8 @@ def generate(data, num_samples=10, limit=4, start=0, classes_to_find=None, singl
         gen_img_list = []
         
         control_image = data[i]['conditioning_image'].unsqueeze(0).to(torch.float16) #eeg DEVE essere #,128,512
-        prompt = data[i]['caption'] #"image" #"real world image views or object" #data[i]['caption'] 
+        prompt = data[i]['caption'] if "classifier" in controlnet_path.lower() else "image" #"image" #"real world image views or object" #data[i]['caption'] 
+        prompt = data[i]['caption'] if args.caption else prompt
         # generate image
         images = pipe(
             prompt, num_inference_steps=20, generator=generator, image=control_image, 
@@ -45,8 +57,9 @@ def generate(data, num_samples=10, limit=4, start=0, classes_to_find=None, singl
             all_samples.append(concatenated)
         else:
             label = data[i]['caption'].replace("image of a", "")
-            images[0].save(f"{controlnet_path}/generated/output_{i}_{label}.png")
-            transforms.ToPILImage()(data[i]['image']).resize((512,512)).save(f"{controlnet_path}/ground_truth/ground_truth_{i}_{label}.png")
+            for j,image in enumerate(images):
+                image.save(f"{controlnet_path}/generated/output_{i}_{j}_{label}.png")
+                transforms.ToPILImage()(data[i]['image']).resize((512,512)).save(f"{controlnet_path}/ground_truth/gt_{i}_{j}_{label}.png")
     return all_samples
 
 
@@ -66,7 +79,7 @@ def generate_grid(data_test, num_samples=10, classes_to_find=None):
         grid_image = transforms.ToPILImage()(grid)
 
         # Save or display the image
-        grid_image.save(f"{controlnet_path}/new_grid_image_{i}.png" if classes_to_find is not None else f"{controlnet_path}/grid_image_{i}.png")
+        grid_image.save(f"{args.controlnet_path}/new_grid_image_{i}.png" if classes_to_find is not None else f"{args.controlnet_path}/grid_image_{i}.png")
         # grid_image.show()
 
   
@@ -75,11 +88,20 @@ img_transform_test = transforms.Compose([
     # normalize, 
     transforms.Resize((512, 512)),   
 ])
+import argparse
 
+parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+parser.add_argument('--controlnet_path', type=str, default="/mnt/media/luigi/model_out_CVPR_MULTISUB_FIXED_CAPTION")
+parser.add_argument('--limit', type=int, default=4)
+parser.add_argument('--caption', action='store_true')
+parser.add_argument('--classes_to_find', action='store_true', help="Don't generate plots")
+parser.add_argument('--single_image_for_eval', action='store_true', help="Don't generate plots")
+
+args = parser.parse_args()  
 
 base_model_path = "stabilityai/stable-diffusion-2-1-base"
-controlnet_path = "/mnt/media/luigi/model_out_CVPR_MULTISUB_CLASSIFIER_CAPTION/checkpoint-4000/controlnet"
-controlnet = ControlNetModel.from_pretrained(controlnet_path, torch_dtype=torch.float16)
+# controlnet_path = "/mnt/media/luigi/model_out_CVPR_MULTISUB_FIXED_CAPTION"
+controlnet = ControlNetModel.from_pretrained(args.controlnet_path, torch_dtype=torch.float16)
 pipe = StableDiffusionControlNetPipeline.from_pretrained(
     base_model_path, controlnet=controlnet, torch_dtype=torch.float16
 )
@@ -91,23 +113,47 @@ pipe.enable_xformers_memory_efficient_attention()
 # memory optimization.
 pipe.enable_model_cpu_offload()
 
-dset_name = "luigi-s/EEG_Image_CVPR_ALL_subj" if not "single" in controlnet_path.lower() else "luigi-s/EEG_Image"
+dset_name = "luigi-s/EEG_Image_CVPR_ALL_subj" #if not "single" in controlnet_path.lower() else "luigi-s/EEG_Image"
 print(dset_name)
 data_test = load_dataset(dset_name, split="test").with_format(type='torch')
-data_test = data_test.filter(lambda x: x['subject'] == 4)
-
+data_test = data_test.filter(lambda x: x['subject'] == 4) if "single" in args.controlnet_path.lower() else data_test
+ 
 # control_image = load_image("./conditioning_image_1.png")
 # prompt = "pale golden rod circle with old lace background"
 generator = torch.manual_seed(0)
-classes_to_find = None #["lantern", "airliner", "panda"]
+paper_classes =  ["lantern", "airliner", "panda"] if args.classes_to_find else None
 # generate_grid(data_test, len(data_test)-1, classes_to_find=classes_to_find)
+classes_to_find_dict = {11: 'lycaenid, lycaenid butterfly', 
+                   21: 'capuchin, ringtail, Cebus capucinus', 
+                   8: 'giant panda, panda, panda bear, coon bear, Ailuropoda melanoleuca', 
+                   6: 'airliner', 
+                   10: 'canoe', 
+                #    15: 'cellular telephone, cellular phone, cellphone, cell, mobile phone',
+                #    5: 'coffee mug', 
+                #    24: 'convertible', 
+                   37: 'electric locomotive',
+                #    25: 'folding chair', 
+                   14: "jack-o'-lantern",
+                #    27: 'mitten', 
+                #    1: 'parachute, chute', 
+                   38: 'radio telescope, radio reflector', 
+                   7: 'revolver, six-gun, six-shooter',
+                   9: 'daisy'
+                   }
 
+classes_to_find_list = list(classes_to_find_dict.values()) if args.classes_to_find else None
 # for i in range(len(data_test)):
 #     print(data_test[i]['subject'], data_test[i]['caption'])
+print(len(data_test))
+if not args.single_image_for_eval:
+    args.limit = 7 #to create the grid
+    generate_grid(data_test, len(data_test)-1, classes_to_find=classes_to_find_list)
 
-all_samples = generate(data_test,
-                    num_samples=len(data_test) , 
-                    limit=1,
-                    start=0,
-                    classes_to_find=classes_to_find, 
-                    single_image_for_eval=True)
+else:
+    all_samples = generate(data_test,
+                        num_samples=len(data_test) , 
+                        limit=args.limit,
+                        start=0,
+                        classes_to_find=classes_to_find_list, 
+                        single_image_for_eval=args.single_image_for_eval,
+                        controlnet_path=args.controlnet_path)
