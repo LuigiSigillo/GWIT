@@ -747,19 +747,28 @@ def make_train_dataset(args, tokenizer, accelerator):
     base_dir = os.path.dirname(os.path.dirname(os.path.dirname(current_dir)))
     # print(base_dir)
     # print(base_dir+"/EEGStyleGAN-ADA/EEG2Feat/Triplet_LSTM/CVPR40")
-    sys.path.append(base_dir+"/EEGStyleGAN-ADA/EEG2Feat/Triplet_LSTM/CVPR40")
+    path_to_append = base_dir+f"/EEGStyleGAN-ADA/EEG2Feat/Triplet_LSTM/CVPR40" if "CVPR" in args.dataset else base_dir+f"/EEGStyleGAN-ADA/EEG2Feat/Triplet_LSTM/Thoughtviz"
+    sys.path.append(path_to_append)
     from network import EEGFeatNet
     sys.path.append(base_dir+"/diffusers/src/dataset_EEG/")
-    from name_map_ID import id_to_caption
-    model     = EEGFeatNet(n_features=128, projection_dim=128, num_layers=4).to("cuda")
+    if "CVPR" in args.dataset:
+        from name_map_ID import id_to_caption
+    else:
+        from name_map_ID import id_to_caption_TVIZ as id_to_caption
+    model     = EEGFeatNet(n_features=128, projection_dim=128, num_layers=4).to("cuda") if "CVPR" in args.dataset else  \
+                EEGFeatNet(n_classes=10, in_channels=14,\
+                           n_features=128, projection_dim=128,\
+                           num_layers=4).to("cuda")
     model     = torch.nn.DataParallel(model).to("cuda")
     import pickle
 
     # Load the model from the file
-    with open(base_dir+'/diffusers/src/dataset_EEG/knn_model.pkl', 'rb') as f:
+    pkl_path = base_dir+'/diffusers/src/dataset_EEG/knn_model.pkl' if "CVPR" in args.dataset else base_dir+'/diffusers/src/dataset_EEG/knn_model_TVIZ.pkl'
+    with open(pkl_path, 'rb') as f:
         knn_cv = pickle.load(f)
-    model.load_state_dict(torch.load(base_dir+"/EEGStyleGAN-ADA/EEG2Feat/Triplet_LSTM/CVPR40/EXPERIMENT_29/bestckpt/eegfeat_all_0.9665178571428571.pth")['model_state_dict'])
-
+    ckpt_path = base_dir+"/EEGStyleGAN-ADA/EEG2Feat/Triplet_LSTM/CVPR40/EXPERIMENT_29/bestckpt/eegfeat_all_0.9665178571428571.pth" if "CVPR" in args.dataset \
+        else base_dir+'/EEGStyleGAN-ADA/EEG2Feat/Triplet_LSTM/Thoughtviz/EXPERIMENT_1/bestckpt/eegfeat_all_0.7212357954545454.pth' 
+    model.load_state_dict(torch.load(ckpt_path)['model_state_dict'])
 
     def get_caption_from_classifier(eeg, labels):
         #TODO
@@ -787,7 +796,9 @@ def make_train_dataset(args, tokenizer, accelerator):
         if args.caption_fixed:
             examples[caption_column] = len(examples[caption_column])*[args.caption_fixed_string]
         if args.caption_from_classifier:
-            examples[caption_column] = get_caption_from_classifier(examples["conditioning_pixel_values"], examples["label"])
+            eeg_key = "conditioning_pixel_values" if "CVPR" in args.dataset else "eeg_no_resample"
+            examples[caption_column] = get_caption_from_classifier(examples[eeg_key], examples["label"]) 
+                                   
         examples["input_ids"] = tokenize_captions(examples)
 
 

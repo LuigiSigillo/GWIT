@@ -44,6 +44,7 @@ import argparse
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('--root', type=str, default='/mnt/media/luigi/model_out_CVPR_MULTISUB_CLASSIFIER_CAPTION/')
 parser.add_argument('--limit', type=int, default=4)
+parser.add_argument('--GA', action='store_true')
 # parser.add_argument('--device', type=str, choices=["cuda:0", "cpu"], default="cuda:0")
 args = parser.parse_args()
 
@@ -65,63 +66,63 @@ gt_image_num=0
 gn_imges_name = os.listdir(gene_folder)
 gn_imges_name.sort()
 from tqdm import tqdm
+if args.GA:
+    for j in tqdm(range(0,len(gt_images_name), args.limit), total=len(gt_images_name)//args.limit):
+        # print(gt_folder + gt_name)
 
-for j in tqdm(range(0,len(gt_images_name), args.limit), total=len(gt_images_name)//args.limit):
-    # print(gt_folder + gt_name)
+        # Load GT image and the path of genetrated images
+        real_image = Image.open(gt_folder + gt_images_name[j]).convert('RGB')
 
-    # Load GT image and the path of genetrated images
-    real_image = Image.open(gt_folder + gt_images_name[j]).convert('RGB')
+        # gene_image_name=[]
+        # name1 = gt_name.split('_')[0] + '_' + gt_name.split('_')[1] + '_' + gt_name.split('_')[2] + '_' + \
+        #         gt_name.split('_')[3] + '_' + gt_name.split('_')[4] + '_' + gt_name.split('_')[5] + '_1.png'
+        # name2 = gt_name.split('_')[0] + '_' + gt_name.split('_')[1] + '_' + gt_name.split('_')[2] + '_' + \
+        #         gt_name.split('_')[3] + '_' + gt_name.split('_')[4] + '_' + gt_name.split('_')[5] + '_2.png'
+        # name3 = gt_name.split('_')[0] + '_' + gt_name.split('_')[1] + '_' + gt_name.split('_')[2] + '_' + \
+        #         gt_name.split('_')[3] + '_' + gt_name.split('_')[4] + '_' + gt_name.split('_')[5] + '_3.png'
+        # name4 = gt_name.split('_')[0] + '_' + gt_name.split('_')[1] + '_' + gt_name.split('_')[2] + '_' + \
+        #         gt_name.split('_')[3] + '_' + gt_name.split('_')[4] + '_' + gt_name.split('_')[5] + '_4.png'
+        # gene_image_name.append(name1)
+        # gene_image_name.append(name2)
+        # gene_image_name.append(name3)
+        # gene_image_name.append(name4)
 
-    # gene_image_name=[]
-    # name1 = gt_name.split('_')[0] + '_' + gt_name.split('_')[1] + '_' + gt_name.split('_')[2] + '_' + \
-    #         gt_name.split('_')[3] + '_' + gt_name.split('_')[4] + '_' + gt_name.split('_')[5] + '_1.png'
-    # name2 = gt_name.split('_')[0] + '_' + gt_name.split('_')[1] + '_' + gt_name.split('_')[2] + '_' + \
-    #         gt_name.split('_')[3] + '_' + gt_name.split('_')[4] + '_' + gt_name.split('_')[5] + '_2.png'
-    # name3 = gt_name.split('_')[0] + '_' + gt_name.split('_')[1] + '_' + gt_name.split('_')[2] + '_' + \
-    #         gt_name.split('_')[3] + '_' + gt_name.split('_')[4] + '_' + gt_name.split('_')[5] + '_3.png'
-    # name4 = gt_name.split('_')[0] + '_' + gt_name.split('_')[1] + '_' + gt_name.split('_')[2] + '_' + \
-    #         gt_name.split('_')[3] + '_' + gt_name.split('_')[4] + '_' + gt_name.split('_')[5] + '_4.png'
-    # gene_image_name.append(name1)
-    # gene_image_name.append(name2)
-    # gene_image_name.append(name3)
-    # gene_image_name.append(name4)
+        gt = preprocess(real_image).unsqueeze(0).to("cuda")
+        gt_class_id = model(gt).squeeze(0).softmax(0).argmax().item()
 
-    gt = preprocess(real_image).unsqueeze(0).to("cuda")
-    gt_class_id = model(gt).squeeze(0).softmax(0).argmax().item()
+        generated_image_list=[]
 
-    generated_image_list=[]
+        # Evaluate
+        for i in range(0,args.limit):
+            # print(gene_folder + gn_imges_name[i])
+            generated_image = Image.open(gene_folder + gn_imges_name[j+i]).convert('RGB')
+            pred = preprocess(generated_image).unsqueeze(0).to("cuda")
+            pred_out = model(pred).squeeze(0).softmax(0).detach()
+            acc, std = n_way_top_k_acc(pred_out, gt_class_id, n_way, num_trials, top_k)
+            generated_image_list.append(generated_image)
+            acc_list.append(acc)
 
-    # Evaluate
-    for i in range(0,args.limit):
-        # print(gene_folder + gn_imges_name[i])
-        generated_image = Image.open(gene_folder + gn_imges_name[j+i]).convert('RGB')
-        pred = preprocess(generated_image).unsqueeze(0).to("cuda")
-        pred_out = model(pred).squeeze(0).softmax(0).detach()
-        acc, std = n_way_top_k_acc(pred_out, gt_class_id, n_way, num_trials, top_k)
-        generated_image_list.append(generated_image)
-        acc_list.append(acc)
+        gt_image_num=gt_image_num+1
 
-    gt_image_num=gt_image_num+1
-
-print("MEAN GA:"+str(np.mean(acc_list)))
+    print("MEAN GA:"+str(np.mean(acc_list)))
 
 
-# import os
-# import shutil
-# from pytorch_fid import fid_score
+import os
+import shutil
+from pytorch_fid import fid_score
 
-# temp_path1 = args.root+'temppath'
+temp_path1 = args.root+'temppath'
 
-# os.makedirs(temp_path1, exist_ok=True)
+os.makedirs(temp_path1, exist_ok=True)
 
-# for filename in os.listdir(gt_folder):
-#     shutil.copy(os.path.join(gt_folder, filename), os.path.join(temp_path1, filename))
+for filename in os.listdir(gt_folder):
+    shutil.copy(os.path.join(gt_folder, filename), os.path.join(temp_path1, filename))
 
-# fid_value = fid_score.calculate_fid_given_paths([temp_path1, gene_folder], batch_size=50, device='cuda', dims=2048)
+fid_value = fid_score.calculate_fid_given_paths([temp_path1, gene_folder], batch_size=50, device='cuda', dims=2048)
 
-# print('FID:', fid_value)
+print('FID:', fid_value)
 
-# shutil.rmtree(temp_path1)
+shutil.rmtree(temp_path1)
 
 
 import os
@@ -130,8 +131,8 @@ import torch
 import torchvision.transforms as transforms
 from torchmetrics.image import StructuralSimilarityIndexMeasure
 from torchmetrics.image.lpip import LearnedPerceptualImagePatchSimilarity
-from einops import rearrange
-
+from torchmetrics.image.kid import KernelInceptionDistance
+kid = KernelInceptionDistance(subset_size=50)
 # Define the necessary transformations
 transform = transforms.Compose([
     transforms.ToTensor()
@@ -159,27 +160,35 @@ def load_images_as_tensors_in_batches(directory, batch_size):
             image_tensors.append(image_tensor)
         yield torch.stack(image_tensors)
 # Batch size
-batch_size = 28
+batch_size = 50
 
 # Initialize SSIM metric
 ssim = StructuralSimilarityIndexMeasure(data_range=1.0)
 
 # Process images in batches
-ssim_values,lpips_values = [],[]
+ssim_values,lpips_values,kid_values = [],[],[]
 for preds_batch, target_batch in tqdm(zip(load_images_as_tensors_in_batches(gene_folder, batch_size),
                                      load_images_as_tensors_in_batches(gt_folder, batch_size))):
     # Ensure preds and target have the same shape
     assert preds_batch.shape == target_batch.shape, "Preds and target must have the same shape"
     
-    # Calculate SSIM for the current batch
-    ssim_value = ssim(preds_batch, target_batch)
-    ssim_values.append(ssim_value)
+    # # Calculate SSIM for the current batch
+    # ssim_value = ssim(preds_batch, target_batch)
+    # ssim_values.append(ssim_value)
     # Calculate LPIPS for the current batch
     lpips_value = calc_lpips(preds_batch, target_batch)
     lpips_values.append(lpips_value)
+    
+    kid.update(target_batch.to(torch.uint8), real=True)
+    kid.update(preds_batch.to(torch.uint8), real=False)
+    kid_values.append(kid.compute()[0])
 # Calculate the mean SSIM value across all batches
-mean_ssim = torch.mean(torch.tensor(ssim_values))
+# mean_ssim = torch.mean(torch.tensor(ssim_values))
 mean_lpips = torch.mean(torch.tensor(lpips_values))
+mean_kid = torch.mean(torch.tensor(kid_values))
 
-print('Mean SSIM:', mean_ssim.item())
+# print('Mean SSIM:', mean_ssim.item())
 print('Mean LPIPS:', mean_lpips.item())
+
+
+print('Mean KID:', mean_kid.item())

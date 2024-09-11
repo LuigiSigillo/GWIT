@@ -252,3 +252,50 @@ class EEGDatasetCVPR(Dataset):
     def __len__(self):
         return len(self.eegs)
 
+
+
+class EEGDatasetTVIZ(Dataset):
+    def __init__(self, eegs, images, labels, subjects=None, n_fft=64, win_length=64, hop_length=16):
+        self.eegs         = eegs
+        self.images       = images
+        self.labels       = labels
+        self.subjects     = subjects
+
+
+    def __getitem__(self, index):
+        eeg    = self.eegs[index]
+        # eeg    = np.float32(self.eegs[index].cpu())
+        norm   = torch.max(eeg) / 2.0
+        eeg    = (eeg - norm)/ norm
+        # eeg    = (eeg - np.min(eeg))/ (np.max(eeg) - np.min(eeg))
+        image  = self.images[index]
+        label  = self.labels[index]
+        subject= self.subjects[index]
+        IMAGE_CLASSES = {'Apple': 0, 'Car': 1, 'Dog': 2, 'Gold': 3, 'Mobile': 4, 'Rose': 5, "Scooter": 6, 'Tiger': 7, 'Wallet': 8, 'Watch': 9}
+        self.id_toclass = {v: k for k, v in IMAGE_CLASSES.items()}
+        # con    = np.zeros(shape=(config.n_subjects,), dtype=np.float32)
+        # con[subject.numpy()-1] = 1.0
+        # con   = torch.from_numpy(con)
+        # eeg_x1 = np.float32(apply_augmentation(eeg, 'random_noise', max_shift=config.max_shift, crop_size=config.crop_size, noise_factor=config.noise_factor))
+        # eeg_x2 = np.float32(apply_augmentation(eeg, 'random_noise', max_shift=config.max_shift, crop_size=config.crop_size, noise_factor=config.noise_factor))
+        # gamma_band = np.float32(extract_freq_band(eeg, fs=1000, nperseg=440))
+        # eeg    = np.float32(np.expand_dims(eeg, axis=0))
+        # eeg_x1 = np.float32(np.expand_dims(eeg_x1, axis=0))
+        # eeg_x2 = np.float32(np.expand_dims(eeg_x2, axis=0))
+        # spectrogram = self.spectrograms[index]
+        # return eeg, eeg_x1, eeg_x2, gamma_band, image, label
+        # return eeg, eeg_x1, eeg_x2, image, label
+        # return eeg, image, label, con
+    
+        return {'conditioning_image': eeg, 
+                'caption': "image of a " + self.id_toclass[label.item()], #+ self.name_map[label.item()], 
+                'image': image, #pil image
+                # 'label_folder': labels_folder,
+                'label': label.item(),
+                'subject': subject.item(),
+                }
+        return eeg, image, label, subject
+
+
+    def __len__(self):
+        return len(self.eegs)
