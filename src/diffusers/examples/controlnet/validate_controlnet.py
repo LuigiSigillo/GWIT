@@ -15,13 +15,19 @@ def generate(data, num_samples=10, limit=4, start=0, classes_to_find=None, singl
              controlnet_path=None):
     all_samples = []
     #check if folder exists
-    if not os.path.exists(f"{controlnet_path}/generated"):
+    if not os.path.exists(f"{controlnet_path}/generated") and classes_to_find is None:
         os.makedirs(f"{controlnet_path}/generated",exist_ok=True)
         os.makedirs(f"{controlnet_path}/ground_truth",exist_ok=True)
     if classes_to_find is not None:
         os.makedirs(f"{controlnet_path}/paper/", exist_ok=True)
         os.makedirs(f"{controlnet_path}/paper/generated",exist_ok=True)
         os.makedirs(f"{controlnet_path}/paper/ground_truth",exist_ok=True)
+        controlnet_path = f"{controlnet_path}/paper"
+    if args.guess:
+        os.makedirs(f"{controlnet_path}/guess/generated",exist_ok=True)
+        os.makedirs(f"{controlnet_path}/guess/ground_truth",exist_ok=True)
+        controlnet_path = f"{controlnet_path}/guess"
+    else:
         controlnet_path = f"{controlnet_path}/paper"
     for i in tqdm(range(start, num_samples+start)):
         found = False
@@ -43,7 +49,9 @@ def generate(data, num_samples=10, limit=4, start=0, classes_to_find=None, singl
         images = pipe(
             prompt, num_inference_steps=20, generator=generator, image=control_image, 
             num_images_per_prompt=limit,
-            subjects = torch.tensor([4]).unsqueeze(0) if not "ALL" in dset_name else data[i]['subject'].unsqueeze(0)
+            subjects = data[i]['subject'].unsqueeze(0),
+            guess_mode=True if args.guess else False,
+            guidance_scale=4.0 if args.guess else 7.5, #default value
         ).images
         # label = data_val[i]['caption'].replace("image of a", "")
         # image.save(f"{controlnet_path}/output_{i}_{label}.png")
@@ -96,6 +104,7 @@ parser.add_argument('--limit', type=int, default=4)
 parser.add_argument('--caption', action='store_true')
 parser.add_argument('--classes_to_find', action='store_true', help="Don't generate plots")
 parser.add_argument('--single_image_for_eval', action='store_true', help="Don't generate plots")
+parser.add_argument('--guess', action='store_true', help="Don't generate plots")
 
 args = parser.parse_args()  
 
