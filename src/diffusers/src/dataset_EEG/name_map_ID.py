@@ -1002,7 +1002,7 @@ name_map = {0: 'tench, Tinca tinca',
 
 id_to_caption = {12: 'German shepherd, German shepherd dog, German police dog, alsatian', 39: 'Egyptian cat', 11: 'lycaenid, lycaenid butterfly', 0: 'sorrel', 21: 'capuchin, ringtail, Cebus capucinus', 35: 'African elephant, Loxodonta africana', 8: 'giant panda, panda, panda bear, coon bear, Ailuropoda melanoleuca', 3: 'anemone fish', 36: 'airliner', 18: 'broom', 10: 'canoe', 15: 'cellular telephone, cellular phone, cellphone, cell, mobile phone', 5: 'coffee mug', 24: 'convertible', 17: 'desktop computer', 34: 'digital watch', 28: 'electric guitar', 37: 'electric locomotive', 4: 'espresso maker', 25: 'folding chair', 16: 'golf ball', 30: 'grand piano, grand', 2: 'iron, smoothing iron', 14: "jack-o'-lantern", 23: 'mailbag, postbag', 20: 'missile', 27: 'mitten', 6: 'mountain bike, all-terrain bike, off-roader', 31: 'mountain tent', 26: "pajama, pyjama, pj's, jammies", 1: 'parachute, chute', 22: 'pool table, billiard table, snooker table', 38: 'radio telescope, radio reflector', 29: 'reflex camera', 7: 'revolver, six-gun, six-shooter', 13: 'running shoe', 32: 'banana', 19: 'pizza, pizza pie', 9: 'daisy', 33: 'bolete'}
 
-
+id_to_caption_TVIZ = {0: 'Apple', 1: 'Car', 2: 'Dog', 3: 'Gold', 4: 'Mobile', 5: 'Rose', 6: 'Scooter', 7: 'Tiger', 8: 'Wallet', 9: 'Watch'}
 folder_label_map = {'n01440764': 'tench, Tinca tinca',
  'n01443537': 'goldfish, Carassius auratus',
  'n01484850': 'great white shark, white shark, man-eater, man-eating shark, Carcharodon carcharias',
