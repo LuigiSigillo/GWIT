@@ -55,7 +55,7 @@ ckpt_path = base_dir+"/EEGStyleGAN-ADA/EEG2Feat/Triplet_LSTM/CVPR40/EXPERIMENT_2
 model.load_state_dict(torch.load(ckpt_path)['model_state_dict'])
 
 def get_caption_from_classifier(eeg, labels):
-    eeg =  torch.stack(eeg) if args.controlnet_path == "CVPR40" else torch.stack([torch.tensor(eeg_e) for eeg_e in eeg]) 
+    eeg =  eeg if "CVPR" in args.controlnet_path else torch.stack([torch.tensor(eeg_e) for eeg_e in eeg]) 
     x_proj = model(eeg.permute(0,2,1).to("cuda"))
     labels = [torch.tensor(l) if not isinstance(l, torch.Tensor) else l for l in labels]
     # Predict the labels
@@ -72,17 +72,17 @@ def generate(data, num_samples=10, limit=4, start=0, classes_to_find=None, singl
     if not os.path.exists(f"{controlnet_path}/generated") and classes_to_find is None:
         os.makedirs(f"{controlnet_path}/generated",exist_ok=True)
         os.makedirs(f"{controlnet_path}/ground_truth",exist_ok=True)
-    if classes_to_find is not None:
+    elif classes_to_find is not None:
         os.makedirs(f"{controlnet_path}/paper/", exist_ok=True)
         os.makedirs(f"{controlnet_path}/paper/generated",exist_ok=True)
         os.makedirs(f"{controlnet_path}/paper/ground_truth",exist_ok=True)
         controlnet_path = f"{controlnet_path}/paper"
-    if args.guess:
+    elif args.guess:
         os.makedirs(f"{controlnet_path}/guess/generated",exist_ok=True)
         os.makedirs(f"{controlnet_path}/guess/ground_truth",exist_ok=True)
         controlnet_path = f"{controlnet_path}/guess"
-    else:
-        controlnet_path = f"{controlnet_path}/paper"
+    # else:
+    #     controlnet_path = f"{controlnet_path}/paper"
     for i in tqdm(range(start, num_samples+start)):
         found = False
         if classes_to_find is not None:
@@ -98,11 +98,12 @@ def generate(data, num_samples=10, limit=4, start=0, classes_to_find=None, singl
         
         control_image = data[i]['conditioning_image'].unsqueeze(0).to(torch.float16) #eeg DEVE essere #,128,512
         #TODO mettere classificatore in effetti 
-        #eeg_key = "conditioning_pixel_values" if "CVPR" in args.controlnet_path else "eeg_no_resample"
-        #prompt = get_caption_from_classifier(data[i][eeg_key], data[i]["label"]) 
-        
-        prompt = data[i]['caption'] if "classifier" in controlnet_path.lower() else "image" #"image" #"real world image views or object" #data[i]['caption'] 
-        prompt = data[i]['caption'] if args.caption else prompt
+        if args.caption:
+            eeg_key = "conditioning_image" if "CVPR" in args.controlnet_path else "eeg_no_resample"
+            prompt = get_caption_from_classifier(data[i][eeg_key].unsqueeze(0), data[i]["label"].unsqueeze(0)) 
+        else:
+            prompt = data[i]['caption'] if "classifier" in controlnet_path.lower() else "image" #"image" #"real world image views or object" #data[i]['caption'] 
+        # prompt = data[i]['caption'] if args.caption else prompt
         # generate image
         images = pipe(
             prompt, num_inference_steps=20, generator=generator, image=control_image, 
@@ -172,9 +173,9 @@ pipe.enable_model_cpu_offload()
 
 dset_name = "luigi-s/EEG_Image_CVPR_ALL_subj" if "CVPR" in args.controlnet_path else  "luigi-s/EEG_Image_TVIZ_ALL_subj" #if not "single" in controlnet_path.lower() else "luigi-s/EEG_Image"
 print(dset_name)
-data_test = load_dataset(dset_name, split="test", cache_dir="/mnt/media/luigi/").with_format(type='torch')
+data_test = load_dataset(dset_name, split="test", cache_dir="/leonardo_scratch/fast/IscrC_GenOpt/luigi/" if "TVIZ" in args.controlnet_path else None).with_format(type='torch')
 data_test = data_test.filter(lambda x: x['subject'] == 4) if "single" in args.controlnet_path.lower() else data_test
- 
+data_test = data_test.shuffle(seed=42)
 # control_image = load_image("./conditioning_image_1.png")
 # prompt = "pale golden rod circle with old lace background"
 generator = torch.manual_seed(0)
