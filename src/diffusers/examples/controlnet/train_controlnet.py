@@ -128,8 +128,8 @@ def log_validation(
     inference_ctx = contextlib.nullcontext() if is_final_validation else torch.autocast("cuda")
     
     data_val = load_dataset(args.dataset_name, split="validation" if "CVPR" in args.dataset_name else "test",
-                            # cache_dir=args.cache_dir
-                            cache_dir="/leonardo_scratch/fast/IscrC_GenOpt/luigi/"
+                            cache_dir=args.cache_dir
+                            #cache_dir="/leonardo_scratch/fast/IscrC_GenOpt/luigi/"
                             ).with_format(type='torch')
     if args.subject_num != 0:
         data_val = data_val.filter(lambda x: x['subject'].item() == args.subject_num)
@@ -657,7 +657,7 @@ def make_train_dataset(args, tokenizer, accelerator):
         dataset = load_dataset(
             args.dataset_name,
             args.dataset_config_name,
-            cache_dir="/leonardo_scratch/fast/IscrC_GenOpt/luigi/" #args.cache_dir,
+            cache_dir=args.cache_dir #"/leonardo_scratch/fast/IscrC_GenOpt/luigi/" #args.cache_dir,
         )
     else:
         if args.train_data_dir is not None:
@@ -779,8 +779,8 @@ def make_train_dataset(args, tokenizer, accelerator):
         #TODO
         # import pdb
         # pdb.set_trace()
-        eeg =  torch.stack(eeg) if "CVPR40" in args.dataset_name else torch.stack([torch.tensor(eeg_e) for eeg_e in eeg]) 
-        x_proj = model(eeg.permute(0,2,1).to("cuda"))
+        eeg =  torch.stack(eeg) if "CVPR" in args.dataset_name else torch.stack([torch.tensor(eeg_e) for eeg_e in eeg]) 
+        x_proj = model(eeg.view(-1,eeg.shape[2],eeg.shape[1]).to("cuda"))
         labels = [torch.tensor(l) if not isinstance(l, torch.Tensor) else l for l in labels]
         # Predict the labels
         predicted_labels = knn_cv.predict(x_proj.cpu().detach().numpy())

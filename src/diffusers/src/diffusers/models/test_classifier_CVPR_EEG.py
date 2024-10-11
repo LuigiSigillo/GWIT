@@ -173,7 +173,7 @@ from sklearn.model_selection import cross_val_score
 # del model
 # torch.cuda.empty_cache()
 
-from pytorch_metric_learning import miners, losses
+# from pytorch_metric_learning import miners, losses
 sys.path.append("/home/luigi/Documents/DrEEam/src/EEGStyleGAN-ADA/EEG2Feat/Triplet_LSTM/CVPR40")
 from network import EEGFeatNet
 from tqdm import tqdm 
@@ -187,7 +187,7 @@ num_layers    = 4
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model     = EEGFeatNet(n_features=feat_dim, projection_dim=projection_dim, num_layers=num_layers).to(device)
 model     = torch.nn.DataParallel(model).to(device)
-miner   = miners.MultiSimilarityMiner()
+# miner   = miners.MultiSimilarityMiner()
 model.load_state_dict(torch.load("/home/luigi/Documents/DrEEam/src/EEGStyleGAN-ADA/EEG2Feat/Triplet_LSTM/CVPR40/EXPERIMENT_29/bestckpt/eegfeat_all_0.9665178571428571.pth")['model_state_dict'])
 
 def test(epoch, model, knn_cv, loss_fn, miner, test_dataloader, experiment_num):
@@ -256,7 +256,7 @@ def test(epoch, model, knn_cv, loss_fn, miner, test_dataloader, experiment_num):
     print(predicted_labels)
     return running_loss, clustering_acc_proj
 
-loss_fn = losses.TripletMarginLoss()
+# loss_fn = losses.TripletMarginLoss()
 epoch = 0
 lr = 3e-4
 model.eval()
@@ -299,44 +299,94 @@ x_test_eeg   = torch.from_numpy(x_test_eeg).float().to(device)
 x_test_image = torch.from_numpy(x_test_image).float().to(device)
 test_labels  = torch.from_numpy(test_labels).long().to(device)
 test_data       = EEGDataset(x_test_eeg, x_test_image, test_labels)
-test_dataloader = torch.utils.data.DataLoader(test_data, batch_size=batch_size, shuffle=False, pin_memory=False, drop_last=False)
+test_dataloader = torch.utils.data.DataLoader(test_data, batch_size=batch_size, shuffle=False, pin_memory=False, drop_last=True)
 
 #train data to fit knn
-for i in tqdm(natsorted(os.listdir(base_path + train_path))):
-    loaded_array = np.load(base_path + train_path + i, allow_pickle=True)
-    x_train_eeg.append(loaded_array[1].T)
-    img = cv2.resize(loaded_array[0], (224, 224))
-    # img = (cv2.cvtColor(img, cv2.COLOR_BGR2RGB) - 127.5) / 127.5
-    img = np.transpose(img, (2, 0, 1))
-    x_train_image.append(img)
-    # if loaded_array[3] not in class_labels:
-    # 	class_labels[loaded_array[3]] = label_count
-    # 	label_count += 1
-    # 	test_cluster += 1
-    # label_test.append(class_labels[loaded_array[3]])
-    label_train.append(loaded_array[2])
-x_train_eeg   = np.array(x_train_eeg)
-x_train_image = np.array(x_train_image)
-train_labels  = np.array(label_train)
-x_train_eeg   = torch.from_numpy(x_train_eeg).float().to(device)
-x_train_image = torch.from_numpy(x_train_image).float().to(device)
-train_labels  = torch.from_numpy(train_labels).long().to(device)
-train_data       = EEGDataset(x_train_eeg, x_train_image, train_labels)
+# for i in tqdm(natsorted(os.listdir(base_path + train_path))):
+#     loaded_array = np.load(base_path + train_path + i, allow_pickle=True)
+#     x_train_eeg.append(loaded_array[1].T)
+#     img = cv2.resize(loaded_array[0], (224, 224))
+#     # img = (cv2.cvtColor(img, cv2.COLOR_BGR2RGB) - 127.5) / 127.5
+#     img = np.transpose(img, (2, 0, 1))
+#     x_train_image.append(img)
+#     # if loaded_array[3] not in class_labels:
+#     # 	class_labels[loaded_array[3]] = label_count
+#     # 	label_count += 1
+#     # 	test_cluster += 1
+#     # label_test.append(class_labels[loaded_array[3]])
+#     label_train.append(loaded_array[2])
+# x_train_eeg   = np.array(x_train_eeg)
+# x_train_image = np.array(x_train_image)
+# train_labels  = np.array(label_train)
+# x_train_eeg   = torch.from_numpy(x_train_eeg).float().to(device)
+# x_train_image = torch.from_numpy(x_train_image).float().to(device)
+# train_labels  = torch.from_numpy(train_labels).long().to(device)
+# train_data       = EEGDataset(x_train_eeg, x_train_image, train_labels)
 
-train_dataloader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, shuffle=False, pin_memory=False, drop_last=True)
+# train_dataloader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, shuffle=False, pin_memory=False, drop_last=True)
 
-x_proj_train = torch.stack([model(batch[0].float().to(device)) for batch in train_dataloader])
-train_labels_batch = torch.stack([batch[2]for batch in train_dataloader])
-knn_cv = KNeighborsClassifier(n_neighbors=3)
+# x_proj_train = torch.stack([model(batch[0].float().to(device)) for batch in train_dataloader])
+# train_labels_batch = torch.stack([batch[2] for batch in train_dataloader])
+# knn_cv = KNeighborsClassifier(n_neighbors=3)
 
-knn_cv.fit(x_proj_train.view(-1,128).cpu().detach().numpy(), train_labels_batch.view(-1).cpu().detach().numpy())
-# Save the model to a file
+# knn_cv.fit(x_proj_train.view(-1,128).cpu().detach().numpy(), train_labels_batch.view(-1).cpu().detach().numpy())
+# # Save the model to a file
 import pickle
 
-with open('knn_model.pkl', 'wb') as f:
-    pickle.dump(knn_cv, f)
+# with open('knn_model.pkl', 'wb') as f:
+#     pickle.dump(knn_cv, f)
 
 # running_test_loss, test_acc   = test(epoch, model,knn_cv, loss_fn, miner, test_dataloader, 29)
 
 
+# Load the KNN model from the file
+with open('/home/luigi/Documents/DrEEam/src/diffusers/src/dataset_EEG/knn_model.pkl', 'rb') as f:
+    knn_cv = pickle.load(f)
+# Project the test data using the trained model
+from datasets import load_dataset
+test_data = load_dataset('luigi-s/EEG_Image_CVPR_ALL_subj', split='test').with_format(type='torch')
 
+test_dataloader_HF = torch.utils.data.DataLoader(test_data, batch_size=batch_size, shuffle=False, pin_memory=False, drop_last=True)
+x_proj_test_HF = torch.stack([model(batch["conditioning_image"].view(-1,440,128).float().to(device)) for batch in test_dataloader_HF])
+test_labels_batch_HF = torch.stack([batch["label"] for batch in test_dataloader_HF])
+
+x_proj_test = torch.stack([model(batch[0].float().to(device)) for batch in test_dataloader])
+test_labels_batch = torch.stack([batch[2] for batch in test_dataloader])
+
+
+# for batch_HF, batch_eeg in zip(test_dataloader_HF, test_dataloader):
+#     proj_HF = model(batch_HF["conditioning_image"].view(-1,440,128).float().to(device))
+#     proj = model(batch_eeg[0].float().to(device))
+#     label_HF = batch_HF["label"]
+#     label = batch_eeg[2]
+#     pred_HF = knn_cv.predict(proj_HF.view(-1, 128).cpu().detach().numpy())
+#     pred = knn_cv.predict(proj.view(-1, 128).cpu().detach().numpy())
+
+# Predict using the KNN model
+predictions = knn_cv.predict(x_proj_test.view(-1, 128).cpu().detach().numpy())
+predictions_HF = knn_cv.predict(x_proj_test_HF.view(-1, 128).cpu().detach().numpy())
+# Evaluate the predictions
+from sklearn.metrics import accuracy_score, classification_report
+
+# Flatten the test labels
+true_labels = test_labels_batch.view(-1).cpu().detach().numpy()
+
+# Compute accuracy
+accuracy = accuracy_score(true_labels, predictions)
+print(f"Accuracy: {accuracy}")
+
+# Print classification report
+report = classification_report(true_labels, predictions)
+print(report)
+
+
+# Flatten the test labels
+true_labels_HF = test_labels_batch_HF.view(-1).cpu().detach().numpy()
+
+# Compute accuracy
+accuracy = accuracy_score(true_labels_HF, predictions_HF)
+print(f"Accuracy HF: {accuracy}")
+
+# Print classification report
+report = classification_report(true_labels_HF, predictions_HF)
+print(report)

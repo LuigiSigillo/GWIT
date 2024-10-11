@@ -56,7 +56,7 @@ model.load_state_dict(torch.load(ckpt_path)['model_state_dict'])
 
 def get_caption_from_classifier(eeg, labels):
     eeg =  eeg if "CVPR" in args.controlnet_path else torch.stack([torch.tensor(eeg_e) for eeg_e in eeg]) 
-    x_proj = model(eeg.permute(0,2,1).to("cuda"))
+    x_proj = model(eeg.view(-1,eeg.shape[2],eeg.shape[1]).to("cuda"))
     labels = [torch.tensor(l) if not isinstance(l, torch.Tensor) else l for l in labels]
     # Predict the labels
     predicted_labels = knn_cv.predict(x_proj.cpu().detach().numpy())
@@ -105,8 +105,10 @@ def generate(data, num_samples=10, limit=4, start=0, classes_to_find=None, singl
             prompt = data[i]['caption'] if "classifier" in controlnet_path.lower() else "image" #"image" #"real world image views or object" #data[i]['caption'] 
         # prompt = data[i]['caption'] if args.caption else prompt
         # generate image
+        prompt = "" if args.guess else prompt
         images = pipe(
-            prompt, num_inference_steps=20, generator=generator, image=control_image, 
+            prompt, 
+            num_inference_steps=20, generator=generator, image=control_image, 
             num_images_per_prompt=limit,
             subjects = data[i]['subject'].unsqueeze(0),
             guess_mode=args.guess,

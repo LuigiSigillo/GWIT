@@ -1,13 +1,13 @@
 import numpy as np
-import umap
-import umap.plot
-import matplotlib.pyplot as plt
+# import umap
+# import umap.plot
+# import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans
 from scipy.optimize import linear_sum_assignment as linear_assignment
-import matplotlib
-import matplotlib.pyplot as plt
+# import matplotlib
+# import matplotlib.pyplot as plt
 from sklearn.manifold import TSNE
-from matplotlib import style
+# from matplotlib import style
 # style.use('seaborn')
 # font = {'family' : 'sans-serif',
 #         # 'weight' : 'bold',

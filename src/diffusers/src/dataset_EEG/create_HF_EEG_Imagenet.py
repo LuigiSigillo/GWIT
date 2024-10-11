@@ -266,10 +266,13 @@ from torchvision import transforms
 to_pil = transforms.ToPILImage()
 
 data_raw = load_dataset('luigi-s/EEG_Image_CVPR_ALL_subj', split='test').with_format(type='torch')
-data = load_dataset('luigi-s/EEG_Image_ALL_subj', split='test').with_format(type='torch')
+# data = load_dataset('luigi-s/EEG_Image_ALL_subj', split='test').with_format(type='torch')
 
 # data = load_dataset('luigi-s/EEG_Image_CVPR_ALL_subj', split='validation')
 # data = load_dataset('luigi-s/EEG_Image_CVPR_ALL_subj', split='test')
 image_data_raw = data_raw[0]['image']
 
 image_data = data[0]['image']
+print(len(data_raw))
+data_raw= data_raw.filter(lambda example: example["subject"].item()==4)
+print(len(data_raw))

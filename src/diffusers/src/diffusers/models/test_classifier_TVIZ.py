@@ -2,7 +2,7 @@
 import os
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"] = "1"
-import config
+# import config
 from tqdm import tqdm
 import numpy as np
 import pdb
@@ -11,24 +11,26 @@ from natsort import natsorted
 import cv2
 from glob import glob
 from torch.utils.data import DataLoader
-from pytorch_metric_learning import miners, losses
+# from pytorch_metric_learning import miners, losses
 import pickle
 import torch
 # import lpips
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+import sys
+sys.path.append("/home/luigi/Documents/DrEEam/src/EEGStyleGAN-ADA/EEG2Feat/Triplet_LSTM/Thoughtviz")
 from dataloader import EEGDataset
 from network import EEGFeatNet
 # from model import ModifiedResNet
 # from CLIPModel import CLIPModel
-from visualizations import Umap, K_means, TsnePlot, save_image
-from losses import ContrastiveLoss
-from dataaugmentation import apply_augmentation
-import matplotlib
-import matplotlib.pyplot as plt
-import matplotlib.cm as cm
-from matplotlib.offsetbox import OffsetImage, AnnotationBbox
+# from visualizations import Umap, K_means, TsnePlot, save_image
+# from losses import ContrastiveLoss
+# from dataaugmentation import apply_augmentation
+# import matplotlib
+# import matplotlib.pyplot as plt
+# import matplotlib.cm as cm
+# from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 # from mpl_toolkits.mplot3d import Axes3D
 # from mpl_toolkits.mplot3d import proj3d
 # from matplotlib import offsetbox
@@ -39,42 +41,6 @@ from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 np.random.seed(45)
 torch.manual_seed(45)
 
-def visualize_scatter_with_images(X_2d_data, images, figsize=(45,45), image_zoom=1):
-    fig, ax = plt.subplots(figsize=figsize)
-
-    artists = []
-    for xy, i in zip(X_2d_data, images):
-        x0, y0 = xy
-        img = OffsetImage(i, zoom=image_zoom)
-        ab = AnnotationBbox(img, (x0, y0), xycoords='data', frameon=False)
-        artists.append(ax.add_artist(ab))
-    ax.update_datalim(X_2d_data)
-    ax.autoscale()
-    plt.show()
-
-# def visualize_scatter_with_images3d(X_3d_data, images, labels, figsize=(45,45), image_zoom=1):
-#     fig = plt.figure()
-#     ax = fig.add_subplot(111, projection=Axes3D.name)
-#     # ax.axis([-100, 100, -100, 100])
-#     unique_labels = np.unique(labels)
-#     colors = plt.cm.get_cmap('tab10')(np.linspace(0, 1, len(unique_labels)))
-#     for i, label in enumerate(unique_labels):
-#     	mask = labels == label
-#         ax.scatter(X_3d_data[mask, 0], X_3d_data[mask, 1], X_3d_data[mask, 2], c=colors[i], label=label, alpha=0)
-
-#     # Create a dummy axes to place annotations to
-#     ax2 = fig.add_subplot(111,frame_on=False) 
-#     ax2.axis("off")
-#     ax2.grid(False)
-#     ia = ImageAnnotations3D(np.c_[X_3d_data[:, 0],X_3d_data[:, 1],X_3d_data[:, 2]],images,ax, ax2 )
-#     plt.tight_layout()
-#     # ax.set_xlabel('X Label')
-#     # ax.set_ylabel('Y Label')
-#     # ax.set_zlabel('Z Label')
-#     plt.show()
-#     pdb.set_trace()
-#     plt.clf()
-#     plt.close()
 
 
 
@@ -156,20 +122,13 @@ def test(epoch, model, optimizer, loss_fn, miner, test_dataloader, experiment_nu
     
 if __name__ == '__main__':
 
-    base_path       = config.base_path
-    test_path = config.test_path
-    device    = config.device
-
-    # ## hyperparameters
-    batch_size     = config.test_batch_size
-    EPOCHS         = config.epoch
-
     class_labels   = {}
     label_count    = 0
     train_cluster = 0
     test_cluster   = 0
+    thoughtviz_path ='/mnt/media/luigi/dataset/dreamdiff/tviz/eeg/image/data.pkl'
 
-    with open(base_path + config.thoughtviz_path, 'rb') as file:
+    with open(thoughtviz_path, 'rb') as file:
         data = pickle.load(file, encoding='latin1')
         train_X = data['x_train']
         train_Y = data['y_train']
@@ -182,11 +141,7 @@ if __name__ == '__main__':
     x_train_image = []
     labels = []
     x_train_subject=[]
-
-    # ## hyperparameters
-    batch_size     = config.batch_size
-    EPOCHS         = config.epoch
-
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     class_labels   = {}
     label_count    = 0
 
@@ -196,12 +151,12 @@ if __name__ == '__main__':
     label_test   = []
     x_test_subject = []
 
-    for idx in tqdm(range(test_X.shape[0])):
+    for idx in tqdm(range(train_X.shape[0])):
         # x_test_eeg.append(np.transpose(test_X[idx], (2, 1, 0)))
-        x_test_eeg.append(np.squeeze(np.transpose(test_X[idx], (2, 1, 0)), axis=0))
+        x_test_eeg.append(np.squeeze(np.transpose(train_X[idx], (2, 1, 0)), axis=0))
         x_test_image.append(np.zeros(shape=(2, 2)))
         x_test_subject.append(0.0)
-        label_test.append(np.argmax(test_Y[idx]))
+        label_test.append(np.argmax(train_Y[idx]))
 
     x_test_eeg   = np.array(x_test_eeg)
     x_test_image = np.array(x_test_image)
@@ -217,20 +172,16 @@ if __name__ == '__main__':
     x_test_subject  = torch.from_numpy(x_test_subject).long()#.to(device)
 
     test_data       = EEGDataset(x_test_eeg, x_test_image, label_test, x_test_subject)
-    test_dataloader = DataLoader(test_data, batch_size=batch_size, shuffle=False, pin_memory=False, drop_last=True)
+    test_dataloader = DataLoader(test_data, batch_size=245, shuffle=False, pin_memory=False, drop_last=True)
 
     # model     = CNNEEGFeatureExtractor(input_shape=[1, config.input_size, config.timestep],\
     #                                    feat_dim=config.feat_dim,\
     #                                    projection_dim=config.projection_dim).to(config.device)
-    model     = EEGFeatNet(n_classes=config.num_classes, in_channels=config.input_size,\
-                           n_features=config.feat_dim, projection_dim=config.projection_dim,\
-                           num_layers=config.num_layers).to(config.device)
-    model     = torch.nn.DataParallel(model).to(config.device)
-    optimizer = torch.optim.Adam(\
-                                    list(model.parameters()),\
-                                    lr=config.lr,\
-                                    betas=(0.9, 0.999)
-                                )
+    model     = EEGFeatNet(n_classes=10, in_channels=14,\
+                           n_features=128, projection_dim=128,\
+                           num_layers=4).to(device)
+    model     = torch.nn.DataParallel(model).to(device)
+
 
     
     # dir_info  = natsorted(glob('EXPERIMENT_*'))
@@ -248,20 +199,41 @@ if __name__ == '__main__':
     #     os.system('cp *.py EXPERIMENT_{}'.format(experiment_num))
     experiment_num = 1
 
-    ckpt_path = 'EXPERIMENT_{}/bestckpt/eegfeat_all_0.7212357954545454.pth'.format(experiment_num)
-
+    ckpt_path = '/home/luigi/Documents/DrEEam/src/EEGStyleGAN-ADA/EEG2Feat/Triplet_LSTM/Thoughtviz/EXPERIMENT_1/bestckpt/eegfeat_all_0.7212357954545454.pth'
+    
     START_EPOCH = 0
 
     # if len(ckpt_lst)>=1:
     checkpoint = torch.load(ckpt_path, map_location=device)
     model.load_state_dict(checkpoint['model_state_dict'])
-    optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+    # optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
     # scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
-    START_EPOCH = checkpoint['epoch']
-    print('Loading checkpoint from previous epoch: {}'.format(START_EPOCH))
+    # START_EPOCH = checkpoint['epoch']
+    # print('Loading checkpoint from previous epoch: {}'.format(START_EPOCH))
 
-    miner   = miners.MultiSimilarityMiner()
-    loss_fn = losses.TripletMarginLoss()
-    epoch   = START_EPOCH
+    # miner   = miners.MultiSimilarityMiner()
+    # loss_fn = losses.TripletMarginLoss()
+    # epoch   = START_EPOCH
 
-    running_test_loss, test_acc   = test(epoch, model, optimizer, loss_fn, miner, test_dataloader, experiment_num)
+    # running_test_loss, test_acc   = test(epoch, model, optimizer, loss_fn, miner, test_dataloader, experiment_num)
+    
+    
+    
+   
+    from sklearn.neighbors import KNeighborsClassifier
+
+    x_proj_train = torch.stack([model(batch[0].float().to(device)) for batch in test_dataloader])
+    train_labels_batch = torch.stack([batch[2]for batch in test_dataloader])
+    knn_cv = KNeighborsClassifier(n_neighbors=3)
+
+    knn_cv.fit(x_proj_train.view(-1,128).cpu().detach().numpy(), train_labels_batch.view(-1).cpu().detach().numpy())
+    # Save the model to a file
+    import pickle
+
+    with open('knn_model_TVIZ.pkl', 'wb') as f:
+        pickle.dump(knn_cv, f)
+
+    # running_test_loss, test_acc   = test(epoch, model,knn_cv, loss_fn, miner, test_dataloader, 29)
+
+
+
