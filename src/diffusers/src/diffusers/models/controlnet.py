@@ -361,6 +361,7 @@ class ControlNetModel(ModelMixin, ConfigMixin, FromOriginalModelMixin):
         from controlnet_conditioning_eeg import ControlNetEEGConditioningEmbedding
         self.controlnet_cond_embedding = ControlNetEEGConditioningEmbedding(
             conditioning_embedding_channels= block_out_channels[0],
+            n_subjects= 7 #24 TODO add this changing with the dataset
             # block_out_channels=conditioning_embedding_out_channels, # default value is  (16, 32, 96, 256)   I LORO
             # conditioning_channels=conditioning_channels, default value is 128
         )

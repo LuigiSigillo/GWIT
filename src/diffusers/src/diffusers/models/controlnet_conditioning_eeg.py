@@ -3,7 +3,7 @@ from typing import Tuple
 import torch
 from torch import nn
 import torch.nn.functional as F
-
+import pdb
 
 class SubjectLayers(nn.Module):
     """Per subject linear layer."""
@@ -17,8 +17,10 @@ class SubjectLayers(nn.Module):
 
     def forward(self, x, subjects):
         #Extract Dimensions:
+        # print(subjects, subjects.shape)
         _, C, D = self.weights.shape
         #
+        # pdb.set_trace()
         weights = self.weights.gather(0, subjects.view(-1, 1, 1).expand(-1, C, D))
         return torch.einsum("bct,bcd->bdt", x, weights)
 

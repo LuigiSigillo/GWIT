@@ -7,11 +7,12 @@ import numpy as np
 # from clip import clip
 from torchmetrics.functional import accuracy
 import os
-from skimage.metrics import structural_similarity as ssim
+# from skimage.metrics import structural_similarity as ssim
 from scipy.spatial.distance import cosine
 from torchvision.models import inception_v3
 from torchvision.transforms import ToTensor, Normalize
-from skimage import io, color
+# from skimage import io, color
+torch.hub.set_dir("/leonardo_scratch/fast/IscrC_GenOpt/luigi/")
 
 def ssim_metric(img1, img2):
     img1=np.array(img1.squeeze(0).cpu())
@@ -51,7 +52,7 @@ args = parser.parse_args()
 weights = ViT_H_14_Weights.DEFAULT
 model = vit_h_14(weights=weights)
 preprocess = weights.transforms()
-model = model.to("cuda")
+model = model.to("cuda" if torch.cuda.is_available() else "cpu")
 model = model.eval()
 n_way = 50
 num_trials = 50
@@ -131,8 +132,8 @@ import torch
 import torchvision.transforms as transforms
 from torchmetrics.image import StructuralSimilarityIndexMeasure
 from torchmetrics.image.lpip import LearnedPerceptualImagePatchSimilarity
-from torchmetrics.image.kid import KernelInceptionDistance
-kid = KernelInceptionDistance(subset_size=50)
+# from torchmetrics.image.kid import KernelInceptionDistance
+# kid = KernelInceptionDistance(subset_size=50)
 # Define the necessary transformations
 transform = transforms.Compose([
     transforms.ToTensor()
@@ -163,7 +164,7 @@ def load_images_as_tensors_in_batches(directory, batch_size):
 batch_size = 50
 
 # Initialize SSIM metric
-ssim = StructuralSimilarityIndexMeasure(data_range=1.0)
+# ssim = StructuralSimilarityIndexMeasure(data_range=1.0)
 
 # Process images in batches
 ssim_values,lpips_values,kid_values = [],[],[]
@@ -179,16 +180,16 @@ for preds_batch, target_batch in tqdm(zip(load_images_as_tensors_in_batches(gene
     lpips_value = calc_lpips(preds_batch, target_batch)
     lpips_values.append(lpips_value)
     
-    kid.update(target_batch.to(torch.uint8), real=True)
-    kid.update(preds_batch.to(torch.uint8), real=False)
-    kid_values.append(kid.compute()[0])
+    # kid.update(target_batch.to(torch.uint8), real=True)
+    # kid.update(preds_batch.to(torch.uint8), real=False)
+    # kid_values.append(kid.compute()[0])
 # Calculate the mean SSIM value across all batches
 # mean_ssim = torch.mean(torch.tensor(ssim_values))
 mean_lpips = torch.mean(torch.tensor(lpips_values))
-mean_kid = torch.mean(torch.tensor(kid_values))
+# mean_kid = torch.mean(torch.tensor(kid_values))
 
 # print('Mean SSIM:', mean_ssim.item())
 print('Mean LPIPS:', mean_lpips.item())
 
 
-print('Mean KID:', mean_kid.item())
+# print('Mean KID:', mean_kid.item())
