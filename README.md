@@ -13,7 +13,7 @@ Generating images from brain waves is gaining increasing attention due to its po
 
 [ISPAMM Lab](https://ispamm.it/) and [NESYA Lab](https://sites.google.com/view/nesya) , Sapienza University of Rome 
 ### Model Architecture :clapper:
-<img src="assets/network.jpg" width="800px"/>
+<img src="figures/architecture.png" width="500px"/>
 
 ### Update
 - **xx.xx.2025**: 
@@ -23,7 +23,7 @@ Generating images from brain waves is gaining increasing attention due to its po
 
 ### Demo
 
-[<img src="assets/zoomed_black_page-0001.jpg" />]() 
+[<img src="figures/results.png" />]() 
 
 For more evaluation, please refer to our [paper](https://arxiv.org/abs/2410.02780) for details.
 
