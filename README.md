@@ -11,7 +11,7 @@ Generating images from brain waves is gaining increasing attention due to its po
 
 [Eleonora Lopez](), [Luigi Sigillo](https://luigisigillo.github.io/), [Federica Colonnese](), [Massimo Panella](https://massimopanella.site.uniroma1.it/) and [Danilo Comminiello](https://danilocomminiello.site.uniroma1.it/home)
 
-[ISPAMM Lab](https://ispamm.it/), Sapienza University of Rome 
+[ISPAMM Lab](https://ispamm.it/) and [NESYA Lab](https://sites.google.com/view/nesya) , Sapienza University of Rome 
 ### Model Architecture :clapper:
 <img src="assets/network.jpg" width="800px"/>
 
