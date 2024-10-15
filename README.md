@@ -13,7 +13,7 @@ Generating images from brain waves is gaining increasing attention due to its po
 
 [ISPAMM Lab](https://ispamm.it/) and [NESYA Lab](https://sites.google.com/view/nesya) , Sapienza University of Rome 
 ### Model Architecture :clapper:
-<img src="figures/architecture.png" width="500px"/>
+<img src="assets/architecture.png" width="500px"/>
 
 ### Update
 - **xx.xx.2025**: 
@@ -23,7 +23,7 @@ Generating images from brain waves is gaining increasing attention due to its po
 
 ### Demo
 
-[<img src="figures/results.png" />]() 
+[<img src="assets/results.png" />]() 
 
 For more evaluation, please refer to our [paper](https://arxiv.org/abs/2410.02780) for details.
 
@@ -32,16 +32,26 @@ For more evaluation, please refer to our [paper](https://arxiv.org/abs/2410.0278
 ### Running Examples
 
 #### Train
-
-
-#### Resume
-
+To launch the training of the model, you can use the following command, you need to change the output_dir:
+```bash
+accelerate launch src/diffusers/examples/controlnet/train_controlnet.py --caption_from_classifier --subject_num=4 --pretrained_model_name_or_path=stabilityai/stable-diffusion-2-1-base --output_dir=output/model_out_CVPR_SINGLE_SUB_CLASSIFIER_CAPTION --dataset_name=luigi-s/EEG_Image_CVPR_ALL_subj --conditioning_image_column=conditioning_image --image_column=image --caption_column=caption --resolution=512 --learning_rate=1e-5 --train_batch_size=8 --num_train_epochs=50 --tracker_project_name=controlnet --enable_xformers_memory_efficient_attention --checkpointing_steps=1000 --validation_steps=500 --report_to wandb --validation_image ./using_VAL_DATASET_PLACEHOLDER.jpeg --validation_prompt "we are using val dataset hopefuly"
+```
 
 #### Test directly
 Request access to the pretrained models from [Google Drive]().
 
+To launch the testing of the model, you can use the following command, you need to change the output_dir:
+```bash
+python src/diffusers/examples/controlnet/validate_controlnet.py --controlnet_path=output/model_out_CVPR_SINGLE_SUB_CLASSIFIER_CAPTION/checkpoint-24000/controlnet/ --caption --single_image_for_eval --guess
+```
+
 
 ### Dataset
+The dataset used are hosted on huggingface: 
+
+- [ImageNetEEG](https://huggingface.co/datasets/luigi-s/EEG_Image_CVPR_ALL_subj)
+- [Thoughtviz](https://huggingface.co/datasets/luigi-s/EEG_Image_TVIZ_ALL_subj)
+
 
 ### Cite
 Please cite our work if you found it useful:
