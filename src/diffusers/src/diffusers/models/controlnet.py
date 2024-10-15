@@ -220,6 +220,7 @@ class ControlNetModel(ModelMixin, ConfigMixin, FromOriginalModelMixin):
         conditioning_embedding_out_channels: Optional[Tuple[int, ...]] = (16, 32, 96, 256),
         global_pool_conditions: bool = False,
         addition_embed_type_num_heads: int = 64,
+        n_subjects: int = 7,
     ):
         super().__init__()
 
@@ -361,7 +362,7 @@ class ControlNetModel(ModelMixin, ConfigMixin, FromOriginalModelMixin):
         from controlnet_conditioning_eeg import ControlNetEEGConditioningEmbedding
         self.controlnet_cond_embedding = ControlNetEEGConditioningEmbedding(
             conditioning_embedding_channels= block_out_channels[0],
-            n_subjects= 7 #24 TODO add this changing with the dataset
+            n_subjects= n_subjects #7 #24 TODO add this changing with the dataset
             # block_out_channels=conditioning_embedding_out_channels, # default value is  (16, 32, 96, 256)   I LORO
             # conditioning_channels=conditioning_channels, default value is 128
         )
@@ -467,6 +468,7 @@ class ControlNetModel(ModelMixin, ConfigMixin, FromOriginalModelMixin):
         conditioning_embedding_out_channels: Optional[Tuple[int, ...]] = (16, 32, 96, 256),
         load_weights_from_unet: bool = True,
         conditioning_channels: int = 3,
+        n_subjects: int = 7
     ):
         r"""
         Instantiate a [`ControlNetModel`] from [`UNet2DConditionModel`].
@@ -517,6 +519,7 @@ class ControlNetModel(ModelMixin, ConfigMixin, FromOriginalModelMixin):
             controlnet_conditioning_channel_order=controlnet_conditioning_channel_order,
             conditioning_embedding_out_channels=conditioning_embedding_out_channels,
             conditioning_channels=conditioning_channels,
+            n_subjects = n_subjects
         )
 
         if load_weights_from_unet:

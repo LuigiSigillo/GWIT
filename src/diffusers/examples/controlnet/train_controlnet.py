@@ -924,7 +924,7 @@ def main(args):
         controlnet = ControlNetModel.from_pretrained(args.controlnet_model_name_or_path)
     else:
         logger.info("Initializing controlnet weights from unet")
-        controlnet = ControlNetModel.from_unet(unet)
+        controlnet = ControlNetModel.from_unet(unet, n_subjects=7 if "CVPR" in args.dataset_name else 24 )
 
     # Taken from [Sayak Paul's Diffusers PR #6511](https://github.com/huggingface/diffusers/pull/6511/files)
     def unwrap_model(model):
