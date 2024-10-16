@@ -34,7 +34,7 @@ pip install src/diffusers
 ```
 
 ```bash
-pip install transformers accelerate xformers==0.0.16 wandb
+pip install transformers accelerate xformers==0.0.16 wandb datasets torchvision==0.14.1
 ```
 #### Train
 To launch the training of the model, you can use the following command, you need to change the output_dir:
