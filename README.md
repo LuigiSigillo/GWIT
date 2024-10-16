@@ -29,8 +29,13 @@ For more evaluation, please refer to our [paper](https://arxiv.org/abs/2410.0278
 
 ### How to run experiments :computer:
 
-### Running Examples
+```bash
+pip install src/diffusers
+```
 
+```bash
+pip install transformers accelerate xformers==0.0.16 wandb
+```
 #### Train
 To launch the training of the model, you can use the following command, you need to change the output_dir:
 ```bash
