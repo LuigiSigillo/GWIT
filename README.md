@@ -1,4 +1,4 @@
-# GWIT
+# GWIT - Guess What I Think: Streamlined EEG-to-Image Generation with Latent Diffusion Models.
 ![visitors](https://visitor-badge.laobi.icu/badge?page_id=luigisigillo/GWIT)
 
 Official PyTorch repository for GWIT, Guess What I Think: Streamlined EEG-to-Image Generation with Latent Diffusion Models.
