@@ -1,4 +1,4 @@
-# GWIT
+# GWIT - Guess What I Think: Streamlined EEG-to-Image Generation with Latent Diffusion Models.
 ![visitors](https://visitor-badge.laobi.icu/badge?page_id=luigisigillo/GWIT)
 [![Paper](https://img.shields.io/badge/arXiv-2405.02771-blue)](https://arxiv.org/abs/2410.02780)
 
@@ -27,8 +27,13 @@ For more evaluation, please refer to our [paper](https://arxiv.org/abs/2410.0278
 
 ### How to run experiments :computer:
 
-### Running Examples
+```bash
+pip install src/diffusers
+```
 
+```bash
+pip install transformers accelerate xformers==0.0.16 wandb numpy==1.26.4 datasets torchvision==0.14.1
+```
 #### Train
 To launch the training of the model, you can use the following command, you need to change the output_dir:
 ```bash
