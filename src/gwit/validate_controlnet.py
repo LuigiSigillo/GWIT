@@ -28,7 +28,7 @@ current_file_path = os.path.abspath(__file__)
 current_dir = os.path.dirname(current_file_path)
 
 # Go up three levels from the current directory
-base_dir = os.path.dirname(os.path.dirname(os.path.dirname(current_dir)))
+base_dir = os.path.dirname(current_dir)
 # print(base_dir)
 # print(base_dir+"/EEGStyleGAN-ADA/EEG2Feat/Triplet_LSTM/CVPR40")
 path_to_append = base_dir+f"/EEGStyleGAN-ADA/EEG2Feat/Triplet_LSTM/CVPR40" if "CVPR" in args.controlnet_path else base_dir+f"/EEGStyleGAN-ADA/EEG2Feat/Triplet_LSTM/Thoughtviz"
@@ -36,9 +36,9 @@ sys.path.append(path_to_append)
 from network import EEGFeatNet
 sys.path.append(base_dir+"/diffusers/src/dataset_EEG/")
 if "CVPR" in args.controlnet_path :
-    from name_map_ID import id_to_caption
+    from dataset_EEG.name_map_ID import id_to_caption
 else:
-    from name_map_ID import id_to_caption_TVIZ as id_to_caption
+    from dataset_EEG.name_map_ID import id_to_caption_TVIZ as id_to_caption
 model     = EEGFeatNet(n_features=128, projection_dim=128, num_layers=4).to("cuda") if "CVPR" in args.controlnet_path  else  \
             EEGFeatNet(n_classes=10, in_channels=14,\
                         n_features=128, projection_dim=128,\
@@ -47,7 +47,7 @@ model     = torch.nn.DataParallel(model).to("cuda")
 import pickle
 
 # Load the model from the file
-pkl_path = base_dir+'/diffusers/src/dataset_EEG/knn_model.pkl' if "CVPR" in args.controlnet_path else base_dir+'/diffusers/src/dataset_EEG/knn_model_TVIZ.pkl'
+pkl_path = base_dir+'/gwit/dataset_EEG/knn_model.pkl' if "CVPR" in args.controlnet_path else base_dir+'/gwit/dataset_EEG/knn_model_TVIZ.pkl'
 with open(pkl_path, 'rb') as f:
     knn_cv = pickle.load(f)
 ckpt_path = base_dir+"/EEGStyleGAN-ADA/EEG2Feat/Triplet_LSTM/CVPR40/EXPERIMENT_29/bestckpt/eegfeat_all_0.9665178571428571.pth" if "CVPR" in args.controlnet_path \
