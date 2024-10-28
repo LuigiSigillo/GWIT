@@ -43,12 +43,20 @@ You can change the dataset using one of, with the dataset_name parameter:
 - luigi-s/EEG_Image_CVPR_ALL_subj
 - luigi-s/EEG_Image_TVIZ_ALL_subj
 
-#### Test directly
+#### Generate directly
+Request access to the pretrained models from [Google Drive]().
+
+To launch the generation of the images from the model, you can use the following command, you need to change the output_dir:
+```bash
+python src/gwit/validate_controlnet.py --controlnet_path=output/model_out_CVPR_SINGLE_SUB_CLASSIFIER_CAPTION/checkpoint-24000/controlnet/ --caption --single_image_for_eval --guess
+```
+
+#### Evaluation directly
 Request access to the pretrained models from [Google Drive]().
 
 To launch the testing of the model, you can use the following command, you need to change the output_dir:
 ```bash
-python src/gwit/validate_controlnet.py --controlnet_path=output/model_out_CVPR_SINGLE_SUB_CLASSIFIER_CAPTION/checkpoint-24000/controlnet/ --caption --single_image_for_eval --guess
+python gwit/evaluation/evaluate.py --controlnet_path=output/model_out_CVPR_SINGLE_SUB_CLASSIFIER_CAPTION/checkpoint-24000/controlnet/ --caption --single_image_for_eval --guess
 ```
 
 
