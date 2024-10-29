@@ -23,13 +23,18 @@ Generating images from brain waves is gaining increasing attention due to its po
 For more evaluation, please refer to our [paper](https://arxiv.org/abs/2410.02780) for details.
 
 ## How to run experiments :computer:
+```bash
+conda create --name=gwit python=3.9
+conda activate gwit
+```
+
 
 ```bash
 pip install src/diffusers
 ```
 
 ```bash
-pip install transformers accelerate xformers==0.0.16 wandb numpy==1.26.4 datasets torchvision==0.14.1
+pip install transformers accelerate xformers==0.0.16 wandb numpy==1.26.4 datasets torchvision==0.14.1 scikit-learn
 ```
 #### Train
 To launch the training of the model, you can use the following command, you need to change the output_dir:
