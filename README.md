@@ -20,8 +20,11 @@
 ![GitHub Issues or Pull Requests](https://img.shields.io/github/issues-closed/luigisigillo/GWIT)
 
  <br>
-
 </h5>
+
+[Eleonora Lopez](), [Luigi Sigillo](https://luigisigillo.github.io/), [Federica Colonnese](), [Massimo Panella](https://massimopanella.site.uniroma1.it/) and [Danilo Comminiello](https://danilocomminiello.site.uniroma1.it/home)
+
+[ISPAMM Lab](https://ispamm.it/) and [NESYA Lab](https://sites.google.com/view/nesya) , Sapienza University of Rome 
 
 ## 📰 News
 
@@ -41,10 +44,6 @@ We propose a streamlined framework leveraging the ControlNet adapter to conditio
 ### 👀 A Minimal yet Powerful Approach
 Unlike existing methods that demand heavy preprocessing, complex architectures, and additional components like captioning models, our approach is efficient and straightforward. This enables a new frontier in real-time BCIs, advancing tasks like visual cue decoding and future neuroimaging applications.
 
-
-[Eleonora Lopez](), [Luigi Sigillo](https://luigisigillo.github.io/), [Federica Colonnese](), [Massimo Panella](https://massimopanella.site.uniroma1.it/) and [Danilo Comminiello](https://danilocomminiello.site.uniroma1.it/home)
-
-[ISPAMM Lab](https://ispamm.it/) and [NESYA Lab](https://sites.google.com/view/nesya) , Sapienza University of Rome 
 
 ## 🚀 Main Results
 
