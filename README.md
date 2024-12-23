@@ -1,4 +1,4 @@
-<h2 align="center"> <a href="https://openreview.net/forum?id=ftGnpZrW7P">Guess What I Think: Streamlined EEG-to-Image Generation with Latent Diffusion Models</a></h2>
+<h2 align="center"> <a href="https://openreview.net/forum?id=ftGnpZrW7P">[ICASSP 2025] Guess What I Think: Streamlined EEG-to-Image Generation with Latent Diffusion Models</a></h2>
 
 <h3 align="center"><a href=""> Project page here 🚀</a></h3>
 
