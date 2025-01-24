@@ -66,7 +66,7 @@ pip install src/diffusers
 ```
 
 ```bash
-pip install transformers accelerate xformers==0.0.16 wandb numpy==1.26.4 datasets torchvision==0.14.1 scikit-learn
+pip install transformers accelerate xformers==0.0.16 wandb numpy==1.26.4 datasets torchvision==0.14.1 scikit-learn torchmetrics==1.4.1 scikit-image pytorch_fid
 ```
 ### Train
 To launch the training of the model, you can use the following command, you need to change the output_dir:
@@ -90,7 +90,7 @@ Request access to the pretrained models from [Google Drive](https://forms.gle/9X
 
 To launch the testing of the model, you can use the following command, you need to change the output_dir:
 ```bash
-python gwit/evaluation/evaluate.py --controlnet_path=output/model_out_CVPR_SINGLE_SUB_CLASSIFIER_CAPTION/checkpoint-24000/controlnet/ --caption --single_image_for_eval --guess
+python src/gwit/evaluation/evaluate.py --controlnet_path=output/model_out_CVPR_SINGLE_SUB_CLASSIFIER_CAPTION/checkpoint-24000/controlnet/ --caption --single_image_for_eval --guess
 ```
 
 

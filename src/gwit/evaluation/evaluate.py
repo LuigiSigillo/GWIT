@@ -186,17 +186,17 @@ def load_images_as_tensors_in_batches(directory, batch_size):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('--root', type=str, default='picture-gene')
+    parser.add_argument('--controlnet_path', type=str, default='picture-gene')
     parser.add_argument('--batch_size', type=int, default=32)
     parser.add_argument('--device', type=str, choices=["cuda:0", "cpu"], default="cuda:0")
     parser.add_argument('--limit', type=int, default=4)
     parser.add_argument('--GA', action='store_true')
+    parser.add_argument('--guess', action='store_true', help="use guess folder")
+
     args = parser.parse_args()
-    args.root_IS = args.root + '/generated/'
+    args.root_IS =  os.path.join(args.controlnet_path,'guess','generated') if args.guess else os.path.join(args.controlnet_path,'generated')
     IS = inception_score(args)
     print('The Inception Score is %.4f' % IS)
-    
-
     weights = ViT_H_14_Weights.DEFAULT
     model = vit_h_14(weights=weights)
     preprocess = weights.transforms()
@@ -207,8 +207,9 @@ if __name__ == '__main__':
     top_k = 1
 
     acc_list = []
-    gt_folder = args.root+"ground_truth/"
-    gene_folder= args.root+"generated/"
+    gt_folder = os.path.join(args.controlnet_path,'guess','ground_truth') if args.guess else os.path.join(args.controlnet_path,'ground_truth')
+    gene_folder= os.path.join(args.controlnet_path,'guess','generated')   if args.guess else os.path.join(args.controlnet_path,'ground_truth') 
+    
     gt_images_name = os.listdir(gt_folder)
     gt_images_name.sort()
     gt_image_num=0
@@ -255,7 +256,7 @@ if __name__ == '__main__':
         print("MEAN GA:"+str(np.mean(acc_list)))
 
 
-    temp_path1 = args.root+'temppath'
+    temp_path1 = args.controlnet_path+'temppath'
 
     os.makedirs(temp_path1, exist_ok=True)
 
