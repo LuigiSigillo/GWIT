@@ -220,7 +220,7 @@ if __name__ == '__main__':
             # print(gt_folder + gt_name)
 
             # Load GT image and the path of genetrated images
-            real_image = Image.open(gt_folder + gt_images_name[j]).convert('RGB')
+            real_image = Image.open(gt_folder + '/' + gt_images_name[j]).convert('RGB')
 
             # gene_image_name=[]
             # name1 = gt_name.split('_')[0] + '_' + gt_name.split('_')[1] + '_' + gt_name.split('_')[2] + '_' + \
@@ -244,7 +244,7 @@ if __name__ == '__main__':
             # Evaluate
             for i in range(0,args.limit):
                 # print(gene_folder + gn_imges_name[i])
-                generated_image = Image.open(gene_folder + gn_imges_name[j+i]).convert('RGB')
+                generated_image = Image.open(gene_folder + '/' + gn_imges_name[j+i]).convert('RGB')
                 pred = preprocess(generated_image).unsqueeze(0).to("cuda")
                 pred_out = model(pred).squeeze(0).softmax(0).detach()
                 acc, std = n_way_top_k_acc(pred_out, gt_class_id, n_way, num_trials, top_k)
