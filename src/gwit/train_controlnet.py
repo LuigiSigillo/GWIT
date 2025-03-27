@@ -760,11 +760,11 @@ def make_train_dataset(args, tokenizer, accelerator):
     else:
         from dataset_EEG.name_map_ID import id_to_caption_TVIZ as id_to_caption
         print(id_to_caption)
-    model     = EEGFeatNet(n_features=128, projection_dim=128, num_layers=4).to("cuda") if "CVPR" in args.dataset_name else  \
+    model     = EEGFeatNet(n_features=128, projection_dim=128, num_layers=4).to("cuda:0") if "CVPR" in args.dataset_name else  \
                 EEGFeatNet(n_classes=10, in_channels=14,\
                            n_features=128, projection_dim=128,\
-                           num_layers=4).to("cuda")
-    model     = torch.nn.DataParallel(model).to("cuda")
+                           num_layers=4).to("cuda:0")
+    model     = torch.nn.DataParallel(model).to("cuda:0")
     import pickle
 
     # Load the model from the file
