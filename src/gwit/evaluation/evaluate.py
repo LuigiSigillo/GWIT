@@ -208,7 +208,7 @@ if __name__ == '__main__':
 
     acc_list = []
     gt_folder = os.path.join(args.controlnet_path,'guess','ground_truth') if args.guess else os.path.join(args.controlnet_path,'ground_truth')
-    gene_folder= os.path.join(args.controlnet_path,'guess','generated')   if args.guess else os.path.join(args.controlnet_path,'ground_truth') 
+    gene_folder= os.path.join(args.controlnet_path,'guess','generated')   if args.guess else os.path.join(args.controlnet_path,'generated') 
     
     gt_images_name = os.listdir(gt_folder)
     gt_images_name.sort()
