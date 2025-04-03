@@ -11,7 +11,7 @@
      
  
 [![arXiv](https://img.shields.io/badge/Arxiv-2410.02780-b31b1b.svg?logo=arXiv)](https://arxiv.org/abs/2410.02780)
-[![IEEE Explore](https://img.shields.io/badge/IEEE-Explore-blue)]()
+[![IEEE Explore](https://img.shields.io/badge/IEEE-Explore-blue)](https://ieeexplore.ieee.org/document/10890059)
 
 [![License](https://img.shields.io/badge/Code%20License-MIT-yellow)](https://github.com/PKU-YuanGroup/LanguageBind/blob/main/LICENSE)
 [![Hits](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2FLuigiSigillo%2FGWIT&count_bg=%2379C83D&title_bg=%23555555&icon=&icon_color=%23E7E7E7&title=hits&edge_flat=false)](https://hits.seeyoufarm.com)
