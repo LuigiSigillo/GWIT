@@ -1,22 +1,14 @@
-import torch
 from torch import nn
-from torch.nn import functional as F
 import torch.utils.data
 from torchvision.models.inception import inception_v3
-import numpy as np
-from tqdm import tqdm
-from PIL import Image
 import os
 from scipy.stats import entropy
 import argparse
-import os
-from PIL import Image
 import torch
 import torchvision.transforms as transforms
-from torchmetrics.image import StructuralSimilarityIndexMeasure
+# from torchmetrics.image import StructuralSimilarityIndexMeasure
 from torchmetrics.image.lpip import LearnedPerceptualImagePatchSimilarity
 from tqdm import tqdm
-import torch
 import torch.nn.functional as F
 from torchvision import transforms
 from PIL import Image
@@ -24,13 +16,11 @@ from torchvision.models import ViT_H_14_Weights, vit_h_14
 import numpy as np
 # from clip import clip
 from torchmetrics.functional import accuracy
-import os
 from skimage.metrics import structural_similarity as ssim
-from scipy.spatial.distance import cosine
+# from scipy.spatial.distance import cosine
 from torchvision.models import inception_v3
 from torchvision.transforms import ToTensor, Normalize
 import argparse
-import os
 import shutil
 from pytorch_fid import fid_score
 # from skimage import io, color
@@ -208,7 +198,7 @@ if __name__ == '__main__':
 
     acc_list = []
     gt_folder = os.path.join(args.controlnet_path,'guess','ground_truth') if args.guess else os.path.join(args.controlnet_path,'ground_truth')
-    gene_folder= os.path.join(args.controlnet_path,'guess','generated')   if args.guess else os.path.join(args.controlnet_path,'ground_truth') 
+    gene_folder= os.path.join(args.controlnet_path,'guess','generated')   if args.guess else os.path.join(args.controlnet_path,'generated') 
     
     gt_images_name = os.listdir(gt_folder)
     gt_images_name.sort()
@@ -220,7 +210,7 @@ if __name__ == '__main__':
             # print(gt_folder + gt_name)
 
             # Load GT image and the path of genetrated images
-            real_image = Image.open(gt_folder + gt_images_name[j]).convert('RGB')
+            real_image = Image.open(os.path.join(gt_folder,gt_images_name[j])).convert('RGB')
 
             # gene_image_name=[]
             # name1 = gt_name.split('_')[0] + '_' + gt_name.split('_')[1] + '_' + gt_name.split('_')[2] + '_' + \
@@ -244,7 +234,7 @@ if __name__ == '__main__':
             # Evaluate
             for i in range(0,args.limit):
                 # print(gene_folder + gn_imges_name[i])
-                generated_image = Image.open(gene_folder + gn_imges_name[j+i]).convert('RGB')
+                generated_image = Image.open(os.path.join(gene_folder,gn_imges_name[j+i])).convert('RGB')
                 pred = preprocess(generated_image).unsqueeze(0).to("cuda")
                 pred_out = model(pred).squeeze(0).softmax(0).detach()
                 acc, std = n_way_top_k_acc(pred_out, gt_class_id, n_way, num_trials, top_k)

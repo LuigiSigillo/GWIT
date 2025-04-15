@@ -69,9 +69,9 @@ pip install src/diffusers
 pip install transformers accelerate xformers==0.0.16 wandb numpy==1.26.4 datasets torchvision==0.14.1 scikit-learn torchmetrics==1.4.1 scikit-image pytorch_fid
 ```
 ### Train
-To launch the training of the model, you can use the following command, you need to change the output_dir:
+To launch the training of the model, you can use the following command, you need to change the output_dir and also specify the gpu number you want to use, right now only 1 GPU is supported:
 ```bash
-accelerate launch src/gwit/train_controlnet.py --caption_from_classifier --subject_num=4 --pretrained_model_name_or_path=stabilityai/stable-diffusion-2-1-base --output_dir=output/model_out_CVPR_SINGLE_SUB_CLASSIFIER_CAPTION --dataset_name=luigi-s/EEG_Image_CVPR_ALL_subj --conditioning_image_column=conditioning_image --image_column=image --caption_column=caption --resolution=512 --learning_rate=1e-5 --train_batch_size=8 --num_train_epochs=50 --tracker_project_name=controlnet --enable_xformers_memory_efficient_attention --checkpointing_steps=1000 --validation_steps=500 --report_to wandb --validation_image ./using_VAL_DATASET_PLACEHOLDER.jpeg --validation_prompt "we are using val dataset hopefuly"
+CUDA_VISIBLE_DEVICES=N accelerate launch src/gwit/train_controlnet.py --caption_from_classifier --subject_num=4 --pretrained_model_name_or_path=stabilityai/stable-diffusion-2-1-base --output_dir=output/model_out_CVPR_SINGLE_SUB_CLASSIFIER_CAPTION --dataset_name=luigi-s/EEG_Image_CVPR_ALL_subj --conditioning_image_column=conditioning_image --image_column=image --caption_column=caption --resolution=512 --learning_rate=1e-5 --train_batch_size=8 --num_train_epochs=50 --tracker_project_name=controlnet --enable_xformers_memory_efficient_attention --checkpointing_steps=1000 --validation_steps=500 --report_to wandb --validation_image ./using_VAL_DATASET_PLACEHOLDER.jpeg --validation_prompt "we are using val dataset hopefuly"
 ```
 You can change the dataset using one of, with the dataset_name parameter: 
 - luigi-s/EEG_Image_CVPR_ALL_subj
@@ -82,7 +82,7 @@ Request access to the pretrained models from [Google Drive](https://forms.gle/9X
 
 To launch the generation of the images from the model, you can use the following command, you need to change the output_dir:
 ```bash
-python src/gwit/validate_controlnet.py --controlnet_path=output/model_out_CVPR_SINGLE_SUB_CLASSIFIER_CAPTION/checkpoint-24000/controlnet/ --caption --single_image_for_eval --guess
+CUDA_VISIBLE_DEVICES=N python src/gwit/validate_controlnet.py --controlnet_path=output/model_out_CVPR_SINGLE_SUB_CLASSIFIER_CAPTION/checkpoint-24000/controlnet/ --caption --single_image_for_eval --guess
 ```
 
 ### Evaluation
@@ -90,7 +90,7 @@ Request access to the pretrained models from [Google Drive](https://forms.gle/9X
 
 To launch the testing of the model, you can use the following command, you need to change the output_dir:
 ```bash
-python src/gwit/evaluation/evaluate.py --controlnet_path=output/model_out_CVPR_SINGLE_SUB_CLASSIFIER_CAPTION/checkpoint-24000/controlnet/ --caption --single_image_for_eval --guess
+CUDA_VISIBLE_DEVICES=N python src/gwit/evaluation/evaluate.py --controlnet_path=output/model_out_CVPR_SINGLE_SUB_CLASSIFIER_CAPTION/checkpoint-24000/controlnet/ --caption --single_image_for_eval --guess
 ```
 
 
@@ -104,15 +104,17 @@ The dataset used are hosted on huggingface:
 ## Cite
 Please cite our work if you found it useful:
 ```
-@misc{lopez2024guessithinkstreamlined,
-      title={Guess What I Think: Streamlined EEG-to-Image Generation with Latent Diffusion Models}, 
-      author={Eleonora Lopez and Luigi Sigillo and Federica Colonnese and Massimo Panella and Danilo Comminiello},
-      year={2024},
-      eprint={2410.02780},
-      archivePrefix={arXiv},
-      primaryClass={cs.CV},
-      url={https://arxiv.org/abs/2410.02780}, 
-}
+@INPROCEEDINGS{lopezsigillogwit,
+  author={Lopez, Eleonora and Sigillo, Luigi and Colonnese, Federica and Panella, Massimo and Comminiello, Danilo},
+  booktitle={ICASSP 2025 - 2025 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP)}, 
+  title={Guess What I Think: Streamlined EEG-to-Image Generation with Latent Diffusion Models}, 
+  year={2025},
+  volume={},
+  number={},
+  pages={1-5},
+  keywords={Neuroimaging;Adaptation models;Visualization;Streaming media;Functional magnetic resonance imaging;Diffusion models;Brain modeling;Electroencephalography;Real-time systems;Spatial resolution;EEG;Diffusion Models;Image Generation},
+  doi={10.1109/ICASSP49660.2025.10890059}}
+
 ```
 
 ## Star History
