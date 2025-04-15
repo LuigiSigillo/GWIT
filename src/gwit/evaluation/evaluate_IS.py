@@ -9,7 +9,7 @@ from PIL import Image
 import os
 from scipy.stats import entropy
 import argparse
-torch.hub.set_dir("/leonardo_scratch/fast/IscrC_GenOpt/luigi/")
+# torch.hub.set_dir("/leonardo_scratch/fast/IscrC_GenOpt/luigi/")
 # python evaluate_IS.py --root /mnt/media/luigi/model_out_CVPR_MULTISUB_FIXED_CAPTION/controlnet/generated 
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -47,7 +47,7 @@ def inception_score(batch_size=args.batch_size, resize=True):
 
     # Get predictions using pre-trained inception_v3 model
     print('Computing predictions using inception v3 model')
-
+    
     files = readDir()
     N = len(files)
     preds = np.zeros((N, 1000))

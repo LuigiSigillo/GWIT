@@ -178,7 +178,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--controlnet_path', type=str, default='picture-gene')
     parser.add_argument('--batch_size', type=int, default=32)
-    parser.add_argument('--device', type=str, choices=["cuda:0", "cpu"], default="cuda:0")
+    parser.add_argument('--device', type=str, choices=["cuda", "cpu"], default="cuda")
     parser.add_argument('--limit', type=int, default=4)
     parser.add_argument('--GA', action='store_true')
     parser.add_argument('--guess', action='store_true', help="use guess folder")

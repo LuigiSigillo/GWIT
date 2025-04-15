@@ -12,7 +12,6 @@ click==8.1.7
 # Editable install with no version control (clip==0.2.0)
 datasets==2.21.0
 decorator==5.1.1
--e ./src/diffusers
 dill==0.3.8
 docker-pycreds==0.4.0
 einops==0.8.0

@@ -1,7 +1,6 @@
 from diffusers import StableDiffusionControlNetPipeline, ControlNetModel, UniPCMultistepScheduler
 from diffusers.utils import load_image
 import torch
-import torch
 from datasets import load_dataset
 from einops import rearrange, repeat
 from torchvision.utils import make_grid
@@ -44,8 +43,8 @@ model     = EEGFeatNet(n_features=128, projection_dim=128, num_layers=4).to("cud
                         n_features=128, projection_dim=128,\
                         num_layers=4).to("cuda")
 model     = torch.nn.DataParallel(model).to("cuda")
-import pickle
 
+import pickle
 # Load the model from the file
 pkl_path = base_dir+'/gwit/dataset_EEG/knn_model.pkl' if "CVPR" in args.controlnet_path else base_dir+'/gwit/dataset_EEG/knn_model_TVIZ.pkl'
 with open(pkl_path, 'rb') as f:
@@ -55,9 +54,9 @@ ckpt_path = base_dir+"/EEGStyleGAN-ADA/EEG2Feat/Triplet_LSTM/CVPR40/EXPERIMENT_2
 model.load_state_dict(torch.load(ckpt_path)['model_state_dict'])
 
 def get_caption_from_classifier(eeg, labels):
-    eeg =  eeg if "CVPR" in args.controlnet_path else torch.stack([torch.tensor(eeg_e) for eeg_e in eeg]) 
+    eeg =  eeg if "CVPR" in args.controlnet_path else torch.stack([e.clone().detach() if isinstance(e, torch.Tensor) else torch.tensor(e) for e in eeg])
     x_proj = model(eeg.view(-1,eeg.shape[2],eeg.shape[1]).to("cuda"))
-    labels = [torch.tensor(l) if not isinstance(l, torch.Tensor) else l for l in labels]
+    labels = [l.clone().detach() if not isinstance(l, torch.Tensor) else l for l in labels]
     # Predict the labels
     predicted_labels = knn_cv.predict(x_proj.cpu().detach().numpy())
     captions = ["image of " + id_to_caption[label] for label in predicted_labels]
@@ -97,7 +96,8 @@ def generate(data, num_samples=10, limit=4, start=0, classes_to_find=None, singl
         gen_img_list = []
         
         control_image = data[i]['conditioning_image'].unsqueeze(0).to(torch.float16) #eeg DEVE essere #,128,512
-        #TODO mettere classificatore in effetti 
+        #mettere classificatore in effetti 
+        #seems done?
         if args.caption:
             eeg_key = "conditioning_image" if "CVPR" in args.controlnet_path else "eeg_no_resample"
             prompt = get_caption_from_classifier(data[i][eeg_key].unsqueeze(0), data[i]["label"].unsqueeze(0)) 
@@ -161,7 +161,9 @@ img_transform_test = transforms.Compose([
 
 base_model_path = "stabilityai/stable-diffusion-2-1-base"
 # controlnet_path = "/mnt/media/luigi/model_out_CVPR_MULTISUB_FIXED_CAPTION"
-controlnet = ControlNetModel.from_pretrained(args.controlnet_path, torch_dtype=torch.float16)
+controlnet = ControlNetModel.from_pretrained(args.controlnet_path, 
+                                             n_subjects=24 if "TVIZ" in args.controlnet_path else 7,
+                                             torch_dtype=torch.float16)
 pipe = StableDiffusionControlNetPipeline.from_pretrained(
     base_model_path, controlnet=controlnet, torch_dtype=torch.float16
 )
@@ -175,7 +177,8 @@ pipe.enable_model_cpu_offload()
 
 dset_name = "luigi-s/EEG_Image_CVPR_ALL_subj" if "CVPR" in args.controlnet_path else  "luigi-s/EEG_Image_TVIZ_ALL_subj" #if not "single" in controlnet_path.lower() else "luigi-s/EEG_Image"
 print(dset_name)
-data_test = load_dataset(dset_name, split="test", cache_dir="/leonardo_scratch/fast/IscrC_GenOpt/luigi/" if "TVIZ" in args.controlnet_path else None).with_format(type='torch')
+# data_test = load_dataset(dset_name, split="test", cache_dir="/leonardo_scratch/fast/IscrC_GenOpt/luigi/" if "TVIZ" in args.controlnet_path else None).with_format(type='torch')
+data_test = load_dataset(dset_name, split="test").with_format(type='torch')
 data_test = data_test.filter(lambda x: x['subject'] == 4) if "single" in args.controlnet_path.lower() else data_test
 data_test = data_test.shuffle(seed=42)
 # control_image = load_image("./conditioning_image_1.png")
