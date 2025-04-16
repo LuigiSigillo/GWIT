@@ -80,9 +80,21 @@ You can change the dataset using one of, with the dataset_name parameter:
 ### Generate
 Request access to the pretrained models from [Google Drive](https://forms.gle/9X2s7iHZvHYaQvMc6).
 
-To launch the generation of the images from the model, you can use the following command, you need to change the controlnet_path:
+To launch the generation of the images from the model, you can use the following commands:
+
+#### EEGCPVR40 - Single subject
 ```bash
-CUDA_VISIBLE_DEVICES=N python src/gwit/generate_controlnet.py --controlnet_path=output/model_out_CVPR_SINGLE_SUB_CLASSIFIER_CAPTION/checkpoint-24000/controlnet/ --caption --single_image_for_eval --guess
+CUDA_VISIBLE_DEVICES=N python src/gwit/generate_controlnet.py --controlnet_path=EEGCVPR40_single_24k_guess_drop/checkpoint-24000/controlnet/ --caption --single_image_for_eval
+```
+
+#### EEGCPVR40 - Multi subject
+```bash
+CUDA_VISIBLE_DEVICES=N python src/gwit/generate_controlnet.py --controlnet_path=EEGCVPR40_multi_20k_guess_drop/ --caption --single_image_for_eval --guess
+```
+
+#### ThoughtViz
+```bash
+CUDA_VISIBLE_DEVICES=N python src/gwit/generate_controlnet.py --controlnet_path=TVIZ_MULTISUB_19k_guess_drop/checkpoint-19000/controlnet/ --caption --single_image_for_eval --guess
 ```
 
 Important DO NOT CHANGE the checkpoint folder name because it is mandatory to use that naming convention to trigger some parts of the code, I need to refactor that I know :( .

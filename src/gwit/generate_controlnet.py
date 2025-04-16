@@ -38,7 +38,7 @@ if "CVPR" in args.controlnet_path :
     from dataset_EEG.name_map_ID import id_to_caption
 else:
     from dataset_EEG.name_map_ID import id_to_caption_TVIZ as id_to_caption
-model     = EEGFeatNet(n_features=128, projection_dim=128, num_layers=4).to("cuda") if "CVPR" in args.controlnet_path  else  \
+model   = EEGFeatNet(n_features=128, projection_dim=128, num_layers=4).to("cuda") if "CVPR" in args.controlnet_path  else  \
             EEGFeatNet(n_classes=10, in_channels=14,\
                         n_features=128, projection_dim=128,\
                         num_layers=4).to("cuda")
@@ -103,12 +103,16 @@ def generate(data, num_samples=10, limit=4, start=0, classes_to_find=None, singl
             prompt = get_caption_from_classifier(data[i][eeg_key].unsqueeze(0), data[i]["label"].unsqueeze(0)) 
         else:
             prompt = data[i]['caption'] if "classifier" in controlnet_path.lower() else "image" #"image" #"real world image views or object" #data[i]['caption'] 
+        # print("classifier_caption: ", prompt, "  gt: ", data[i]['caption'])
         # prompt = data[i]['caption'] if args.caption else prompt
         # generate image
-        prompt = "" if args.guess else prompt
+        # maybe this is not needed anymore, handled by contrlnet itslef since it is trained with the caption
+        # prompt = "" if args.guess else prompt
         images = pipe(
             prompt, 
-            num_inference_steps=20, generator=generator, image=control_image, 
+            num_inference_steps=20 if not args.guess else 50, 
+            generator=generator, 
+            image=control_image, 
             num_images_per_prompt=limit,
             subjects = data[i]['subject'].unsqueeze(0),
             guess_mode=args.guess,
