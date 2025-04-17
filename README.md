@@ -1,6 +1,6 @@
 <h2 align="center"> <a href="https://arxiv.org/abs/2410.02780">[ICASSP 2025] Guess What I Think: Streamlined EEG-to-Image Generation with Latent Diffusion Models</a></h2>
 
-<h3 align="center"><a href=""> Project page here 🚀</a></h3>
+<!-- <h3 align="center"><a href=""> Project page here 🚀</a></h3> -->
 
 <div align=center><img src="assets/architecture.png" width="500px"/></div>
 
@@ -27,8 +27,9 @@
 [ISPAMM Lab](https://ispamm.it/) and [NESYA Lab](https://sites.google.com/view/nesya) , Sapienza University of Rome 
 
 ## 📰 News
-
-* **[2024.12.25]** 🔥🔥🔥 Request the checkpoints available [here](https://forms.gle/9X2s7iHZvHYaQvMc6)!
+* **[2025.04.16]** Checkpoints updated relased with also some fixes in the code!
+* **[2025.04.08]** Presented the poster in Hyderabad, ICASSP 2025!
+* **[2024.12.25]** Request the checkpoints available [here](https://forms.gle/9X2s7iHZvHYaQvMc6)!
 * **[2024.12.25]**  Code is available now! Welcome to **watch** 👀 this repository for the latest updates.
 * **[2024.12.20]**  The paper has been accepted for presentation at ICASSP 2025 🎉! 
 * **[2024.09.17]**  The paper has been published on Arxiv 🎉. The pdf version is available [here]([https://arxiv.org/pdf/2412.11959](https://arxiv.org/abs/2410.02780))! 
@@ -84,7 +85,7 @@ To launch the generation of the images from the model, you can use the following
 
 #### EEGCPVR40 - Single subject
 ```bash
-CUDA_VISIBLE_DEVICES=N python src/gwit/generate_controlnet.py --controlnet_path=EEGCVPR40_single_24k_guess_drop/checkpoint-24000/controlnet/ --caption --single_image_for_eval
+CUDA_VISIBLE_DEVICES=N python src/gwit/generate_controlnet.py --controlnet_path=EEGCVPR40_single_22k_guess_drop/checkpoint-22000/controlnet/ --caption --single_image_for_eval --guess
 ```
 
 #### EEGCPVR40 - Multi subject
