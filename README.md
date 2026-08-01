@@ -133,13 +133,7 @@ Please cite our work if you found it useful:
 
 ## Star History
 
-<a href="https://www.star-history.com/?repos=LuigiSigillo%2FGWIT&type=date&legend=top-left">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=LuigiSigillo/GWIT&type=date&theme=dark&legend=top-left&sealed_token=8-KnSIMxHGS_BOGB9tzuHJr9sQ2tHgNa9iLEWS1eXSaxilpsZIwVBoLEe1Y-3azN3qHmMo-hMmEAX6GShRn0teOC_R6z8WA5BowthcKQgF9CzTVBWwUJ9K74Jc7KP6pdyEBlpqlvfRdEjeVA7owZdZ1Z3SLWFTyayZhbrkHymjbXdI2aeYQIXV3jbJax" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=LuigiSigillo/GWIT&type=date&legend=top-left&sealed_token=8-KnSIMxHGS_BOGB9tzuHJr9sQ2tHgNa9iLEWS1eXSaxilpsZIwVBoLEe1Y-3azN3qHmMo-hMmEAX6GShRn0teOC_R6z8WA5BowthcKQgF9CzTVBWwUJ9K74Jc7KP6pdyEBlpqlvfRdEjeVA7owZdZ1Z3SLWFTyayZhbrkHymjbXdI2aeYQIXV3jbJax" />
-   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=LuigiSigillo/GWIT&type=date&legend=top-left&sealed_token=8-KnSIMxHGS_BOGB9tzuHJr9sQ2tHgNa9iLEWS1eXSaxilpsZIwVBoLEe1Y-3azN3qHmMo-hMmEAX6GShRn0teOC_R6z8WA5BowthcKQgF9CzTVBWwUJ9K74Jc7KP6pdyEBlpqlvfRdEjeVA7owZdZ1Z3SLWFTyayZhbrkHymjbXdI2aeYQIXV3jbJax" />
- </picture>
-</a>
+[![Star History Chart](https://api.star-history.com/chart?repos=LuigiSigillo/GWIT&type=date&legend=top-left&sealed_token=8-KnSIMxHGS_BOGB9tzuHJr9sQ2tHgNa9iLEWS1eXSaxilpsZIwVBoLEe1Y-3azN3qHmMo-hMmEAX6GShRn0teOC_R6z8WA5BowthcKQgF9CzTVBWwUJ9K74Jc7KP6pdyEBlpqlvfRdEjeVA7owZdZ1Z3SLWFTyayZhbrkHymjbXdI2aeYQIXV3jbJax)](https://www.star-history.com/?repos=LuigiSigillo%2FGWIT&type=date&legend=top-left)
 
 ## Acknowledgement
 
